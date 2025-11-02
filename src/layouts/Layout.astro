@@ -2,9 +2,15 @@
 import Footer from '@/components/Footer.astro';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
+import StructuredData from '@/components/StructuredData.astro';
 import '../styles/global.css';
 import { getAlternateUrls } from '@/i18n/utils';
 import { defaultLang } from '@/i18n/ui';
+import {
+  getPersonSchema,
+  getOrganizationSchema,
+  getWebSiteSchema,
+} from '@/lib/site-metadata';
 
 interface Props {
   title: string;
@@ -15,6 +21,14 @@ interface Props {
 const { title, description, locale } = Astro.props;
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://behangmotief.be';
 const alternateUrls = getAlternateUrls(Astro.url, siteUrl);
+
+// Generate base structured data for all pages
+const lang = locale.split('-')[0] as 'nl' | 'en';
+const baseStructuredData = [
+  getPersonSchema(lang),
+  getOrganizationSchema(lang),
+  getWebSiteSchema(lang),
+];
 ---
 
 <!doctype html>
@@ -34,6 +48,12 @@ const alternateUrls = getAlternateUrls(Astro.url, siteUrl);
     ))}
     {/* x-default pointing to the default language (Dutch) */}
     <link rel="alternate" hreflang="x-default" href={alternateUrls[defaultLang]} />
+
+    {/* Base structured data: Person, Organization, WebSite */}
+    <StructuredData schema={baseStructuredData} />
+
+    {/* Allow page-specific structured data via slot */}
+    <slot name="structured-data" />
   </head>
   <body>
     <slot />

@@ -10,6 +10,8 @@ import PostGrid from '../../components/PostGrid.astro';
 import Pagination from '../../components/Pagination.astro';
 import Header from '@/components/Header.astro';
 import SearchField from '@/components/SearchField.astro';
+import StructuredData from '@/components/StructuredData.astro';
+import { getCollectionPageSchema } from '@/lib/site-metadata';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -28,9 +30,14 @@ const { albums, pagination } = await albumsService.searchAlbums({
 });
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
+
+// Generate archive page structured data
+const collectionPageSchema = getCollectionPageSchema(lang as 'nl' | 'en');
 ---
 
 <Layout title={t('archive.title')} description={t('archive.description')} locale={lang}>
+  <StructuredData slot="structured-data" schema={collectionPageSchema} />
+
   <Header />
   <main class="container mx-auto px-4 md:px-0 py-8">
     <SearchField

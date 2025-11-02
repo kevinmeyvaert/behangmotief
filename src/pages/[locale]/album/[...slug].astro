@@ -7,8 +7,10 @@ import AlbumLightbox from '@/components/AlbumLightbox.astro';
 import BlurHashImage from '@/components/BlurHashImage.astro';
 import RelatedContentSection from '@/components/RelatedContentSection.astro';
 import Header from '@/components/Header.astro';
+import StructuredData from '@/components/StructuredData.astro';
 import { formatPostDate } from '@/lib/date';
 import { ImageUrlBuilder } from '@/lib/image-url-builder';
+import { getImageGallerySchema } from '@/lib/site-metadata';
 import type { Image, Post } from '@/types/wannabes.types';
 
 const { slug } = Astro.params;
@@ -32,6 +34,24 @@ const descriptions = (venue?: string, artist?: string) => {
 };
 
 const description = descriptions(post.venue.name, post.artist.name);
+
+// Generate ImageGallery structured data for the album
+const imageGallerySchema = getImageGallerySchema(
+  {
+    title: `${post.artist.name} at ${post.venue.name}`,
+    description,
+    date: new Date(post.date).toISOString().split('T')[0],
+    artist: post.artist.name,
+    venue: post.venue.name,
+    images: post.images.slice(0, 10).map((img: any) => ({
+      url: ImageUrlBuilder.hero(img.hires),
+      alt: `${post.artist.name} at ${post.venue.name}`,
+      width: img.dimensions?.width || 1920,
+      height: img.dimensions?.height || 1280,
+    })),
+  },
+  lang as 'nl' | 'en'
+);
 ---
 
 <Layout
@@ -39,6 +59,8 @@ const description = descriptions(post.venue.name, post.artist.name);
   description={description}
   locale={lang}
 >
+  <StructuredData slot="structured-data" schema={imageGallerySchema} />
+
   <Header />
   <main>
     <article>

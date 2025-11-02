@@ -1,0 +1,32 @@
+---
+/**
+ * StructuredData component
+ *
+ * Renders Schema.org structured data as JSON-LD in the page head.
+ * Accepts either a single schema object or an array of schemas.
+ *
+ * Usage:
+ * <StructuredData schema={getPersonSchema('nl')} />
+ * <StructuredData schema={[getPersonSchema('nl'), getOrganizationSchema('nl')]} />
+ */
+
+interface Props {
+  schema: Record<string, any> | Record<string, any>[];
+}
+
+const { schema } = Astro.props;
+
+// If array of schemas, wrap in @graph structure
+const structuredData = Array.isArray(schema)
+  ? {
+      '@context': 'https://schema.org',
+      '@graph': schema.map(s => {
+        // Remove @context from individual schemas to avoid duplication
+        const { '@context': _context, ...rest } = s;
+        return rest;
+      }),
+    }
+  : schema;
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
