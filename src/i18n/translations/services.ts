@@ -16,23 +16,29 @@ export const services = {
     "services.licensing.title": "Photo Licensing",
     "services.licensing.description":
       "I offer photo licensing for your projects, whether you need a single image or a collection.",
+      "services.press.title": "Press & BTS",
+      "services.press.description":
+      "Professional press and behind-the-scenes photography services, capturing candid moments and key highlights to enhance your media coverage and storytelling.",
   },
   nl: {
     "services.title": "Wat ik aanbied",
     "services.festival.title": "Festival reportages",
     "services.festival.description":
-      "Naadloze festivaldekking met een snelle doorlooptijd—hoogwaardige beelden die de energie en opwinding van elk moment vastleggen.",
+      "Van de eerste riff tot het laatste confettikanon — ik leg de energie, sfeer en chaos van elk festivalmoment vast, zodat de beleving blijft hangen, ook na het laatste nummer.",
     "services.concert.title": "Concertfotografie",
     "services.concert.description":
-      "Professionele concertfotografie met snelle levering, zodat bands en locaties opvallende beelden ontvangen die klaar zijn voor promotie en marketing zodra de show voorbij is.",
-    "services.social.title": "Curated Social Media Feeds",
+      "Scherpe, meeslepende beelden die de kracht van een optreden vangen. Perfect om meteen te gebruiken voor promotie, pers of socials.",
+    "services.social.title": "Social Media Feeds",
     "services.social.description":
-      "Moeiteloos samengestelde social media feeds met verse, boeiende content die snel geleverd wordt om je publiek geboeid te houden.",
+      "Altijd nieuwe, opvallende beelden die je socials fris houden. Ik help je een consistente, herkenbare visuele stijl neer te zetten die blijft hangen bij je publiek.",
     "services.workshops.title": "Workshops",
     "services.workshops.description":
-      "Ik bied workshops en lezingen aan voor andere fotografen om hen te helpen het meeste uit hun concertfotografie te halen.",
+      "Interactieve sessies voor fotografen die hun concertwerk willen verbeteren — vol praktische tips, creatieve inzichten en realistische voorbeelden uit de pit.",
     "services.licensing.title": "Fotolicentie",
     "services.licensing.description":
-      "Ik bied fotolicenties aan voor je projecten, of je nu één beeld of een collectie nodig hebt.",
+      "Gebruik mijn foto’s voor je eigen projecten, campagnes of publicaties. Of je nu één beeld nodig hebt of een hele serie — ik denk met je mee.",
+      "services.press.title": "Pers & behind the scenes",
+      "services.press.description":
+      "Echte momenten, rauwe emoties. Van backstage tot persshoots: ik leg vast wat er buiten het podium gebeurt, voor verhalen die dichter bij de artiest komen.",
   },
 };
