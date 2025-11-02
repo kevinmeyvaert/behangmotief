@@ -30,7 +30,7 @@ const { albums, pagination } = await albumsService.searchAlbums({
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
 ---
 
-<Layout title={t('archive.title')} description={t('archive.description')}>
+<Layout title={t('archive.title')} description={t('archive.description')} locale={lang}>
   <Header />
   <main class="container mx-auto px-4 md:px-0 py-8">
     <SearchField
