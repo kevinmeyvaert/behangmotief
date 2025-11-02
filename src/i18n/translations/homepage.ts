@@ -3,14 +3,14 @@ export const homepage = {
     "landing.title": "Behangmotief — Music & festival photographer",
     "landing.description":
       "Behangmotief is a music and festival photographer known for vibrant, high-contrast images that capture the energy of live performances. With a fast, reliable turnaround, Behangmotief delivers dynamic visuals full of color and motion, turning every moment into an impactful story for artists, venues, and festivals.",
-    "hero.title": "Capturing Moments in Music",
+    "hero.title": "Live music. Captured as it feels.",
     "hero.subtitle": "Professional music & festival photography",
-    "hero.cta": "Get to know me 🙋‍♂️",
+    "hero.cta": "Discover my work 🙋‍♂️",
     "about.title": "Capturing the Energy of Live Music",
     "about.description1":
-      "With years of experience in music photography, I specialize in capturing the raw energy and emotion of live performances. From intimate club shows to massive festival stages, I bring a unique perspective to every shot.",
+      "With years of experience in music photography, I capture the raw emotion and intensity of performances, from intimate club shows to massive festival stages.",
     "about.description2":
-      "My work focuses on creating timeless images that tell the story of each performance, preserving the magic of live music for years to come.",
+      "My images tell the story of each performance and keep the magic of live music alive, long after the final chord has faded.",
   },
   nl: {
     "landing.title": "Behangmotief — Muziek & festivalfotograaf",

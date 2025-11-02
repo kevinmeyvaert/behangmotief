@@ -3,22 +3,22 @@ export const services = {
     "services.title": "What I offer",
     "services.festival.title": "Festival Coverage",
     "services.festival.description":
-      "Seamless festival coverage with a quick turnaround—delivering high-quality visuals that capture the energy and excitement of every moment.",
+      "From the first riff to the last confetti cannon — I capture the energy, atmosphere, and chaos of every festival moment, so the experience lingers long after the final song.",
     "services.concert.title": "Concert Photography",
     "services.concert.description":
-      "Professional concert photography with fast delivery, ensuring bands and venues receive striking images ready for promotion and marketing as soon as the show ends.",
-    "services.social.title": "Curated Social Media Feeds",
+      "Sharp, immersive images that capture the power of a performance. Perfect for immediate use in promotion, press, or socials.",
+    "services.social.title": "Social Media Feeds",
     "services.social.description":
-      "Effortlessly curated social media feeds with fresh, engaging content delivered quickly to keep your audience captivated.",
+      "Fresh, eye-catching visuals that keep your socials alive. I help you build a consistent, recognizable visual style that resonates with your audience.",
     "services.workshops.title": "Workshops",
     "services.workshops.description":
-      "I offer workshops and talks for other photographers to help them get the most out of their concert photography.",
+      "Interactive sessions for photographers looking to elevate their concert work — packed with practical tips, creative insights, and real-world examples from the pit.",
     "services.licensing.title": "Photo Licensing",
     "services.licensing.description":
-      "I offer photo licensing for your projects, whether you need a single image or a collection.",
-      "services.press.title": "Press & BTS",
+      "Use my photos for your projects, campaigns, or publications. Whether you need a single image or an entire series — I'll work with you to find the right fit.",
+      "services.press.title": "Press & Behind the Scenes",
       "services.press.description":
-      "Professional press and behind-the-scenes photography services, capturing candid moments and key highlights to enhance your media coverage and storytelling.",
+      "Real moments, raw emotions. From backstage to press shoots: I capture what happens beyond the stage, for stories that get closer to the artist.",
   },
   nl: {
     "services.title": "Wat ik aanbied",
