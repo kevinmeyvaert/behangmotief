@@ -48,7 +48,6 @@ This project combines modern web technologies with a GraphQL-powered content man
 ### Styling
 
 - **[Tailwind CSS v4](https://tailwindcss.com)** - Utility-first CSS framework via Vite plugin
-- **tailwind-merge** - Intelligent utility class composition
 - **tw-animate-css** - Animation utilities
 
 ### Data & API

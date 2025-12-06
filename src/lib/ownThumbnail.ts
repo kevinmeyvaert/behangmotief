@@ -1,4 +1,5 @@
-import type { Post } from '@/types/graphql';
+import type { Post } from "@/types/wannabes.types";
+
 
 export const checkThumbnails = (album: Post) => {
   if (album.thumbnail.photographer?.firstName !== 'Kevin') {

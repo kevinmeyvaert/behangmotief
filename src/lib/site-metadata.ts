@@ -2,7 +2,7 @@
  * Centralized site metadata for SEO and Schema.org structured data
  */
 
-export const siteMetadata = {
+const siteMetadata = {
   name: 'Behangmotief',
   url: 'https://behangmotief.be',
   description: {
@@ -311,24 +311,5 @@ export function getProfessionalServiceSchema(locale: 'nl' | 'en' = 'nl') {
     },
     priceRange: business.priceRange,
     image: `${url}${author.image}`,
-  };
-}
-
-/**
- * Generate BreadcrumbList schema
- */
-export function getBreadcrumbSchema(
-  breadcrumbs: Array<{ name: string; url: string }>,
-  locale: 'nl' | 'en' = 'nl'
-) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbs.map((crumb, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: crumb.name,
-      item: crumb.url,
-    })),
   };
 }

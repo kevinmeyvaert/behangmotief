@@ -6,13 +6,13 @@ import type {
   RelatedPostsQuery 
 } from '@/types/wannabes.types';
 
-export interface AlbumSearchParams {
+interface AlbumSearchParams {
   start?: number;
   limit?: number;
   searchTerm?: string;
 }
 
-export interface RelatedAlbumsParams {
+interface RelatedAlbumsParams {
   artistSlug?: string;
   venueSlug?: string;
 }

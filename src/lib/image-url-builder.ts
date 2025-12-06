@@ -1,4 +1,4 @@
-export interface ImageTransformOptions {
+interface ImageTransformOptions {
   width?: number;
   height?: number;
   format?: 'jpg' | 'webp' | 'png';

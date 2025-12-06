@@ -146,17 +146,3 @@ export const RELATED_ALBUMS = gql`
     }
   }
 `;
-
-export const ALBUM_PATHS = gql`
-  query GetAlbumPaths {
-    posts: postSearch(
-      photographerSlug: "kevin-meyvaert"
-      start: 0
-      limit: 500
-    ) {
-      data {
-        slug
-      }
-    }
-  }
-`;
