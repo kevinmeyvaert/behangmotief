@@ -131,7 +131,7 @@ export default defineConfig({
   trailingSlash: 'always',
   adapter: vercel({
     isr: {
-      exclude: ['/nl/archief', '/en/archive'],
+      exclude: ['/nl/archief/', '/en/archive/'],
     },
     webAnalytics: {
       enabled: true,
