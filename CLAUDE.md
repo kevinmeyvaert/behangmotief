@@ -23,15 +23,16 @@ npm run codegen      # Generate TypeScript types from GraphQL schema
 ## Architecture
 
 ### Technology Stack
-- **Framework**: Astro with React components
+- **Framework**: Astro
 - **Styling**: Tailwind CSS v4 (configured via Vite plugin)
 - **Deployment**: Vercel with ISR (Incremental Static Regeneration)
 - **Data Source**: GraphQL API at graphql.wannabes.be
 - **Image Processing**: Sharp, Blurhash for progressive loading
 
 ### Project Structure
-- `/src/pages/[locale]/` - Internationalized page routes
-- `/src/components/` - Astro and React components
+- `/src/pages/[locale]/` - Localized dynamic routes (`index`, `album/[...slug]`)
+- `/src/pages/en/archive.astro` and `/src/pages/nl/archief.astro` - Explicit localized archive routes
+- `/src/components/` - Astro components
 - `/src/i18n/` - Translation utilities and UI strings
 - `/src/lib/` - Core utilities including GraphQL client and queries
 - `/src/types/` - TypeScript types (auto-generated from GraphQL)
@@ -53,7 +54,6 @@ npm run codegen      # Generate TypeScript types from GraphQL schema
 
 ## Development Notes
 
-- The site uses server-side rendering with selective ISR exclusions for archive and grid pages
+- The site uses server-side rendering with selective ISR exclusions for archive pages
 - Images are primarily served from images.wannabes.be with on-the-fly transformations
-- The project includes custom Curtains.js integrations for advanced image effects
 - Vercel Analytics is enabled for production monitoring

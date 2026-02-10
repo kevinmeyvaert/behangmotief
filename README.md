@@ -5,7 +5,6 @@
 A modern, multilingual photography portfolio showcasing festival and concert photography across Belgium and Europe
 
 [![Astro](https://img.shields.io/badge/Astro-5.x-BC52EE.svg?style=flat&logo=astro)](https://astro.build)
-[![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![GraphQL](https://img.shields.io/badge/GraphQL-E10098.svg?style=flat&logo=graphql&logoColor=white)](https://graphql.org)
@@ -42,7 +41,6 @@ This project combines modern web technologies with a GraphQL-powered content man
 ### Framework & Runtime
 
 - **[Astro](https://astro.build)** - Modern web framework with hybrid SSR/SSG rendering
-- **[React](https://react.dev)** - Interactive UI components
 - **[TypeScript](https://www.typescriptlang.org)** - Type-safe development
 
 ### Styling
@@ -112,6 +110,7 @@ This project combines modern web technologies with a GraphQL-powered content man
 | `npm run build`   | Build production site to `./dist/`            |
 | `npm run preview` | Preview production build locally              |
 | `npm run codegen` | Generate TypeScript types from GraphQL schema |
+| `npm run check`   | Run Astro type and diagnostics checks          |
 
 ---
 
@@ -120,13 +119,13 @@ This project combines modern web technologies with a GraphQL-powered content man
 ```
 /
 ├── src/
-│   ├── pages/[locale]/            # Internationalized page routes
-│   │   ├── index.astro           # Homepage with featured work
-│   │   ├── [...archive].astro    # Paginated album archive
-│   │   ├── album/[...slug].astro # Individual album pages
-│   │   ├── contact.astro         # Contact page
-│   │   └── grid.astro            # Full image grid view
-│   ├── components/                # Astro & React components
+│   ├── pages/[locale]/            # Localized dynamic routes
+│   │   ├── index.astro           # Homepage (/nl and /en)
+│   │   └── album/[...slug].astro # Individual album pages
+│   ├── pages/en/archive.astro     # English archive page
+│   ├── pages/nl/archief.astro     # Dutch archive page
+│   ├── pages/index.astro          # Redirects / -> /nl
+│   ├── components/                # Astro components
 │   │   ├── *Lightbox.astro       # Gallery lightbox viewers
 │   │   ├── MasonryGrid.astro     # Responsive image layouts
 │   │   ├── BlurHashImage.astro   # Progressive image loading
@@ -147,9 +146,8 @@ This project combines modern web technologies with a GraphQL-powered content man
 │   ├── fonts/                    # Web fonts
 │   └── images/                   # Static images
 ├── astro.config.mjs              # Astro configuration
-├── tailwind.config.js            # Tailwind CSS configuration
-├── codegen.yml                   # GraphQL Code Generator config
-└── vercel.json                   # Vercel deployment config
+├── wannabes.yml                  # GraphQL Code Generator config
+└── package.json                  # Scripts and dependencies
 ```
 
 ---
@@ -190,7 +188,7 @@ Multi-layered approach for optimal performance:
 Deployed on **Vercel** with:
 
 - **Hybrid Rendering**: SSR with selective ISR for dynamic content
-- **ISR Exclusions**: Archive and grid pages use on-demand generation
+- **ISR Exclusions**: Archive pages are excluded from ISR
 - **Edge Caching**: Optimized cache headers for static assets
 - **Analytics**: Real-time performance and visitor tracking
 
