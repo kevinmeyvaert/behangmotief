@@ -1,28 +1,33 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import {
-  getLangFromUrl,
-  useTranslatedPath,
-  useTranslations,
-} from '../../i18n/utils';
+import Layout from '@/layouts/Layout.astro';
+import { useTranslatedPath, useTranslations } from '@/i18n/utils';
 import { albumsService } from '@/services/albums.service';
-import PostGrid from '../../components/PostGrid.astro';
-import Pagination from '../../components/Pagination.astro';
+import PostGrid from '@/components/PostGrid.astro';
+import Pagination from '@/components/Pagination.astro';
 import Header from '@/components/Header.astro';
 import SearchField from '@/components/SearchField.astro';
 import StructuredData from '@/components/StructuredData.astro';
 import { getCollectionPageSchema } from '@/lib/site-metadata';
 
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const translatePath = useTranslatedPath(lang);
+interface Props {
+  locale: 'en' | 'nl';
+}
 
-// Get search param if it exists
+const { locale } = Astro.props;
+
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
 const searchParam = Astro.url.searchParams.get('search') || '';
-const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
+const rawCurrentPage = Number.parseInt(
+  Astro.url.searchParams.get('page') || '1',
+  10
+);
+const currentPage = Number.isFinite(rawCurrentPage) && rawCurrentPage > 0
+  ? rawCurrentPage
+  : 1;
 const POSTS_PER_PAGE = 15;
 
-// Fetch posts with pagination using the service
 const { albums, pagination } = await albumsService.searchAlbums({
   start: (currentPage - 1) * POSTS_PER_PAGE,
   limit: POSTS_PER_PAGE,
@@ -30,20 +35,16 @@ const { albums, pagination } = await albumsService.searchAlbums({
 });
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
-
-// Generate archive page structured data
-const collectionPageSchema = getCollectionPageSchema(lang as 'nl' | 'en');
+const archiveRoute = translatePath('/archive');
+const collectionPageSchema = getCollectionPageSchema(locale);
 ---
 
-<Layout title={t('archive.title')} description={t('archive.description')} locale={lang}>
+<Layout title={t('archive.title')} description={t('archive.description')} locale={locale}>
   <StructuredData slot="structured-data" schema={collectionPageSchema} />
 
   <Header />
   <main class="container mx-auto px-4 md:px-0 py-8">
-    <SearchField
-      currentSearch={searchParam}
-      archiveRoute={translatePath('/archive')}
-    />
+    <SearchField currentSearch={searchParam} archiveRoute={archiveRoute} />
 
     {searchParam && albums.length === 0 ? (
       <div class="text-center py-16">
@@ -60,7 +61,7 @@ const collectionPageSchema = getCollectionPageSchema(lang as 'nl' | 'en');
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        baseUrl={translatePath('/archive')}
+        baseUrl={archiveRoute}
       />
     </div>
   </main>

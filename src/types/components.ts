@@ -1,26 +1,15 @@
-// Common image properties used across components
-export interface ImageData {
-  src: string;
-  alt: string;
-  width?: number;
-  height?: number;
-  blurhash?: string;
-}
-
-// Album/Post data structure
+// Album/Post card data used by grids and related content.
 export interface AlbumPost {
   id: string;
   slug: string;
   date: string;
   artist: {
     name: string;
-    slug?: string;
   };
   venue: {
     name: string;
-    slug?: string;
   };
-  event?: {
+  event: {
     name: string;
   };
   thumbnail: {
@@ -34,21 +23,15 @@ export interface AlbumPost {
       firstName: string;
     };
   };
-  images?: Array<{
-    id: string;
+  images: Array<{
     blurhash: string;
-    hires: string;
-    dimensions?: {
-      width: number;
-      height: number;
-    };
+    resized: string;
     photographer?: {
       firstName: string;
     };
   }>;
 }
 
-// Grid layout properties
 export interface GridLayoutProps {
   columns?: {
     mobile?: number;
@@ -57,23 +40,4 @@ export interface GridLayoutProps {
   };
   gap?: string;
   loading?: 'lazy' | 'eager';
-}
-
-// Common component properties
-export interface ComponentBase {
-  className?: string;
-  id?: string;
-}
-
-// Image component properties
-export interface ImageComponentProps extends ComponentBase, ImageData {
-  loading?: 'lazy' | 'eager';
-}
-
-// Pagination properties
-export interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  baseUrl: string;
-  searchParams?: URLSearchParams;
 }

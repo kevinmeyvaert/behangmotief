@@ -1,10 +1,8 @@
 ---
-import { fetcher } from '@/lib/graphql-client';
-import { POSTS } from '@/lib/queries';
 import PostGrid from './PostGrid.astro';
-import type { SearchQuery } from '@/types/wannabes.types';
 import { useTranslations } from '@/i18n/utils';
 import { Image } from 'astro:assets';
+import { albumsService } from '@/services/albums.service';
 
 interface Props {
   locale: keyof typeof import('@/i18n/ui').ui;
@@ -12,10 +10,7 @@ interface Props {
 
 const { locale } = Astro.props;
 
-const { posts } = await fetcher<SearchQuery>(POSTS, {
-  start: 0,
-  limit: 6,
-});
+const posts = await albumsService.getRecentAlbums(6);
 
 const t = useTranslations(locale);
 ---
@@ -45,7 +40,7 @@ const t = useTranslations(locale);
       <h2 class="text-3xl font-bold mb-12 border-b-2 border-white inline-block">
         {t('recent.work')}
       </h2>
-      <PostGrid posts={posts.data} loading="lazy" />
+      <PostGrid posts={posts} loading="lazy" />
     </div>
   </div>
 </section>

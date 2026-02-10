@@ -4,9 +4,10 @@ import { checkThumbnails } from '../lib/ownThumbnail';
 import { formatPostDate } from '@/lib/date';
 import BlurHashImage from './BlurHashImage.astro';
 import type { ui } from '@/i18n/ui';
+import type { AlbumPost } from '@/types/components';
 
 export interface Props {
-  relatedPosts: any[];
+  relatedPosts: AlbumPost[];
   title: string;
   postId: string;
   className?: string;

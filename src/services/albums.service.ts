@@ -1,10 +1,7 @@
 import { fetcher } from '@/lib/graphql-client';
 import { POSTS, ALBUM, RELATED_ALBUMS } from '@/lib/queries';
-import type { 
-  SearchQuery, 
-  AlbumQuery, 
-  RelatedPostsQuery 
-} from '@/types/wannabes.types';
+import type { AlbumPost } from '@/types/components';
+import type { AlbumQuery, RelatedPostsQuery, SearchQuery } from '@/types/wannabes.types';
 
 interface AlbumSearchParams {
   start?: number;
@@ -16,6 +13,12 @@ interface RelatedAlbumsParams {
   artistSlug?: string;
   venueSlug?: string;
 }
+
+type RelatedAlbum = RelatedPostsQuery['sameArtist']['data'][number];
+type AlbumDetail = AlbumQuery['post'];
+
+const isKevinPhoto = (photographer?: { firstName: string }) =>
+  photographer?.firstName === 'Kevin';
 
 class AlbumsService {
   async searchAlbums({ start = 0, limit = 12, searchTerm }: AlbumSearchParams = {}) {
@@ -32,11 +35,11 @@ class AlbumsService {
       };
     }
 
-    // Filter for Kevin's photos only
-    const filteredAlbums = data.posts.data.filter(post => 
-      post.thumbnail?.photographer?.firstName === 'Kevin' ||
-      post.images?.some(img => img.photographer?.firstName === 'Kevin')
-    );
+    const filteredAlbums = data.posts.data.filter(
+      (post) =>
+        isKevinPhoto(post.thumbnail?.photographer) ||
+        post.images.some((img) => isKevinPhoto(img.photographer))
+    ) as AlbumPost[];
 
     return {
       albums: filteredAlbums,
@@ -44,17 +47,16 @@ class AlbumsService {
     };
   }
 
-  async getAlbumBySlug(slug: string) {
+  async getAlbumBySlug(slug: string): Promise<AlbumDetail | null> {
     const data = await fetcher<AlbumQuery>(ALBUM, { slug });
     
     if (!data?.post) {
       return null;
     }
 
-    // Filter images to only include Kevin's photos
-    const kevinImages = data.post.images?.filter(
-      img => img.photographer?.firstName === 'Kevin'
-    ) || [];
+    const kevinImages = data.post.images.filter((img) =>
+      isKevinPhoto(img.photographer)
+    );
 
     return {
       ...data.post,
@@ -68,11 +70,12 @@ class AlbumsService {
       venueSlug
     });
 
-    const filterKevinPhotos = (posts: any[]) => 
-      posts?.filter(post => 
-        post.thumbnail?.photographer?.firstName === 'Kevin' ||
-        post.images?.some((img: any) => img.photographer?.firstName === 'Kevin')
-      ) || [];
+    const filterKevinPhotos = (posts: RelatedAlbum[]) =>
+      posts.filter(
+        (post) =>
+          isKevinPhoto(post.thumbnail?.photographer) ||
+          post.images.some((img) => isKevinPhoto(img.photographer))
+      ) as AlbumPost[];
 
     return {
       sameArtist: filterKevinPhotos(data?.sameArtist?.data || []),

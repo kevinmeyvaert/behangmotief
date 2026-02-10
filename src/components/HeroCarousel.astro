@@ -1,7 +1,6 @@
 ---
-import Image from 'astro/components/Image.astro';
-import { decode } from 'blurhash';
-import sharp from 'sharp';
+import { Image } from 'astro:assets';
+import { blurhashToDataUrl } from '@/lib/blurhash-placeholder';
 
 interface Props {
   images: {
@@ -13,34 +12,16 @@ interface Props {
 
 const { images } = Astro.props;
 
-async function getDataUrlFromBlurhash(blurhash: string) {
-  const pixels = decode(blurhash, 32, 32);
-  const buffer = Buffer.from(pixels);
-
-  const sharpImage = sharp(buffer, {
-    raw: {
-      width: 32,
-      height: 32,
-      channels: 4,
-    },
-  });
-
-  return await sharpImage
-    .png()
-    .toBuffer()
-    .then((buffer) => `data:image/png;base64,${buffer.toString('base64')}`);
-}
-
 const imagesWithPlaceholder = await Promise.all(
   images.map(async (image) => ({
     ...image,
-    placeholder: await getDataUrlFromBlurhash(image.blurhash),
+    placeholder: await blurhashToDataUrl(image.blurhash),
   }))
 );
 ---
 
-<div class="w-full h-full overflow-hidden relative" id="carousel">
-  <div class="h-full flex transition-transform duration-500 ease-out">
+<div class="w-full h-full overflow-hidden relative" data-carousel>
+  <div class="h-full flex transition-transform duration-500 ease-out" data-carousel-track>
     {
       imagesWithPlaceholder.map((image, index) => (
         <div class="w-full h-full flex-none">
@@ -61,7 +42,7 @@ const imagesWithPlaceholder = await Promise.all(
   </div>
   <button
     class="absolute top-1/2 -translate-y-1/2 left-4 bg-white/70 hover:bg-white/90 rounded-full p-2 transition cursor-pointer"
-    id="prevButton"
+    data-carousel-prev
     aria-label="Previous slide"
   >
     <svg
@@ -80,7 +61,7 @@ const imagesWithPlaceholder = await Promise.all(
   </button>
   <button
     class="absolute top-1/2 -translate-y-1/2 right-4 bg-white/70 hover:bg-white/90 rounded-full p-2 transition cursor-pointer"
-    id="nextButton"
+    data-carousel-next
     aria-label="Next slide"
   >
     <svg
@@ -102,16 +83,23 @@ const imagesWithPlaceholder = await Promise.all(
 <script>
   class Carousel {
     constructor(element: HTMLElement) {
-      const container = element.querySelector('div') as HTMLElement;
+      const container = element.querySelector(
+        '[data-carousel-track]'
+      ) as HTMLElement | null;
       const prevButton = element.querySelector(
-        '#prevButton'
-      ) as HTMLButtonElement;
+        '[data-carousel-prev]'
+      ) as HTMLButtonElement | null;
       const nextButton = element.querySelector(
-        '#nextButton'
-      ) as HTMLButtonElement;
+        '[data-carousel-next]'
+      ) as HTMLButtonElement | null;
+
+      if (!container || !prevButton || !nextButton) {
+        return;
+      }
+
       const slides = container.children;
       let currentIndex = 0;
-      let autoplayInterval: number;
+      let autoplayInterval: ReturnType<typeof setInterval> | undefined;
 
       const updateSlidePosition = () => {
         const offset = -currentIndex * 100;
@@ -131,7 +119,9 @@ const imagesWithPlaceholder = await Promise.all(
       };
 
       const stopAutoplay = () => {
-        clearInterval(autoplayInterval);
+        if (autoplayInterval) {
+          clearInterval(autoplayInterval);
+        }
       };
 
       // Event listeners
@@ -155,7 +145,7 @@ const imagesWithPlaceholder = await Promise.all(
   }
 
   // Initialize all carousels on the page
-  document.querySelectorAll('#carousel').forEach((element) => {
+  document.querySelectorAll('[data-carousel]').forEach((element) => {
     new Carousel(element as HTMLElement);
   });
 </script>

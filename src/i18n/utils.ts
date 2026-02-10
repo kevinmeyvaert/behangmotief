@@ -1,4 +1,7 @@
-import { ui, defaultLang, routes, showDefaultLang } from './ui';
+import { ui, defaultLang, routes } from './ui';
+
+type Language = keyof typeof ui;
+type TranslationDictionary = (typeof ui)[typeof defaultLang];
 
 export function getLangFromUrl(url: URL) {
   const [, lang] = url.pathname.split('/');
@@ -6,25 +9,21 @@ export function getLangFromUrl(url: URL) {
   return defaultLang;
 }
 
-export function useTranslations(lang: keyof typeof ui) {
-  return function t(key: keyof (typeof ui)[typeof defaultLang]) {
-    return key in ui[lang] ? (ui[lang] as any)[key] : ui[defaultLang][key];
+export function useTranslations(lang: Language) {
+  const dictionary = ui[lang] as TranslationDictionary;
+  return function t<Key extends keyof TranslationDictionary>(
+    key: Key
+  ): TranslationDictionary[Key] {
+    return (dictionary[key] ?? ui[defaultLang][key]) as TranslationDictionary[Key];
   };
 }
 
-export function useTranslatedPath(lang: keyof typeof ui) {
-  return function translatePath(path: string, l: string = lang) {
+export function useTranslatedPath(lang: Language) {
+  return function translatePath(path: string, l: Language = lang) {
     const pathName = path.replaceAll('/', '');
-    const hasTranslation =
-      routes[l as keyof typeof routes] !== undefined &&
-      routes[l as keyof typeof routes][
-        pathName as keyof (typeof routes)[keyof typeof routes]
-      ] !== undefined;
+    const hasTranslation = routes[l]?.[pathName as keyof (typeof routes)[Language]] !== undefined;
     const translatedPath = hasTranslation
-      ? '/' +
-        routes[l as keyof typeof routes][
-          pathName as keyof (typeof routes)[keyof typeof routes]
-        ]
+      ? '/' + routes[l][pathName as keyof (typeof routes)[Language]]
       : path;
 
     return `/${l}${translatedPath}`;

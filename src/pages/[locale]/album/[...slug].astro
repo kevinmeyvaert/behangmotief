@@ -2,7 +2,6 @@
 import Layout from '../../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
 import { albumsService } from '@/services/albums.service';
-import { routes } from '@/i18n/ui';
 import AlbumLightbox from '@/components/AlbumLightbox.astro';
 import BlurHashImage from '@/components/BlurHashImage.astro';
 import RelatedContentSection from '@/components/RelatedContentSection.astro';
@@ -11,7 +10,6 @@ import StructuredData from '@/components/StructuredData.astro';
 import { formatPostDate } from '@/lib/date';
 import { ImageUrlBuilder } from '@/lib/image-url-builder';
 import { getImageGallerySchema } from '@/lib/site-metadata';
-import type { Image, Post } from '@/types/wannabes.types';
 
 const { slug } = Astro.params;
 const lang = getLangFromUrl(Astro.url);
@@ -19,21 +17,31 @@ const t = useTranslations(lang);
 
 // Join the slug array into a path string
 const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
+if (!slugPath) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not found',
+  });
+}
 
 // Fetch the album data using the service
-const post = await albumsService.getAlbumBySlug(slugPath!);
+const post = await albumsService.getAlbumBySlug(slugPath);
+if (!post) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not found',
+  });
+}
 
-// Get a random description from the translations
-const descriptions = (venue?: string, artist?: string) => {
-  const descriptionTemplates = t('album.descriptions');
-  const randomIndex = Math.floor(Math.random() * descriptionTemplates.length);
-  const template = descriptionTemplates[randomIndex];
-  return template
-    .replace('{venue}', venue || '')
-    .replace('{artist}', artist || '');
-};
-
-const description = descriptions(post.venue.name, post.artist.name);
+const descriptionTemplates = t('album.descriptions') as string[];
+const templateCount = descriptionTemplates.length || 1;
+const deterministicIndex =
+  slugPath.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+  templateCount;
+const descriptionTemplate = descriptionTemplates[deterministicIndex] || '';
+const description = descriptionTemplate
+  .replace('{venue}', post.venue.name)
+  .replace('{artist}', post.artist.name);
 
 // Generate ImageGallery structured data for the album
 const imageGallerySchema = getImageGallerySchema(
@@ -43,7 +51,7 @@ const imageGallerySchema = getImageGallerySchema(
     date: new Date(post.date).toISOString().split('T')[0],
     artist: post.artist.name,
     venue: post.venue.name,
-    images: post.images.slice(0, 10).map((img: any) => ({
+    images: post.images.slice(0, 10).map((img) => ({
       url: ImageUrlBuilder.hero(img.hires),
       alt: `${post.artist.name} at ${post.venue.name}`,
       width: img.dimensions?.width || 1920,

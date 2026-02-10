@@ -11,7 +11,7 @@
  */
 
 interface Props {
-  schema: Record<string, any> | Record<string, any>[];
+  schema: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const { schema } = Astro.props;
@@ -29,4 +29,8 @@ const structuredData = Array.isArray(schema)
   : schema;
 ---
 
-<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+<script
+  is:inline
+  type="application/ld+json"
+  set:html={JSON.stringify(structuredData)}
+/>

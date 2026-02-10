@@ -1,7 +1,6 @@
 ---
-import Image from 'astro/components/Image.astro';
-import { decode } from 'blurhash';
-import sharp from 'sharp';
+import { Image } from 'astro:assets';
+import { blurhashToDataUrl } from '@/lib/blurhash-placeholder';
 
 interface Props {
   src: string;
@@ -23,30 +22,7 @@ const {
   loading = 'lazy',
 } = Astro.props;
 
-// Generate blurhash preview
-let base64Image = '';
-
-if (blurhash && blurhash.length >= 6) {
-  const pixels = decode(blurhash, 32, 32);
-  const buffer = Buffer.from(pixels);
-
-  // Convert to PNG and get base64
-  const sharpImage = sharp(buffer, {
-    raw: {
-      width: 32,
-      height: 32,
-      channels: 4,
-    },
-  });
-
-  base64Image = await sharpImage
-    .png()
-    .toBuffer()
-    .then((buffer) => `data:image/png;base64,${buffer.toString('base64')}`);
-} else {
-  // Skip blurhash generation
-  console.warn('Blurhash string is too short, skipping generation.');
-}
+const base64Image = await blurhashToDataUrl(blurhash);
 ---
 
 <div class="relative">

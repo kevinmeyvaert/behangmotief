@@ -5,8 +5,6 @@ export const languages = {
   nl: "Nederlands",
 };
 
-export const showDefaultLang = true;
-
 export const routes = {
   nl: {
     archive: "archief",

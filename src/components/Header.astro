@@ -1,27 +1,48 @@
 ---
-// Astro components don't need explicit imports for their own components
 import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import Navigation from './Navigation.astro';
 
+interface Props {
+  theme?: 'light' | 'dark';
+  absolute?: boolean;
+}
+
+const { theme = 'light', absolute = false } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 ---
 
 <header
-  class="container mx-auto flex justify-between items-center h-[150px] px-4 md:px-0"
+  class:list={[
+    absolute
+      ? 'absolute top-0 left-0 right-0 z-20'
+      : undefined,
+  ]}
 >
-  <a href={`/${lang}`}>
-    <div class="flex items-center">
-      <Image
-        src="/logo.svg"
-        width={80}
-        height={55}
-        alt="Behangmotief"
-        loading="eager"
-      />
-      <p class="ml-2 text-xs sm:text-sm">{t('nav.photographer.tagline')}</p>
+  <div class="container mx-auto px-4 md:px-0">
+    <div class="flex justify-between items-center h-[150px]">
+      <a href={`/${lang}`}>
+        <div class="flex items-center">
+          <Image
+            src="/logo.svg"
+            width={80}
+            height={55}
+            alt="Behangmotief"
+            loading="eager"
+            class={theme === 'dark' ? 'brightness-0 invert' : undefined}
+          />
+          <p
+            class:list={[
+              'ml-2 text-xs sm:text-sm',
+              theme === 'dark' ? 'text-white' : undefined,
+            ]}
+          >
+            {t('nav.photographer.tagline')}
+          </p>
+        </div>
+      </a>
+      <Navigation theme={theme} />
     </div>
-  </a>
-  <Navigation />
+  </div>
 </header>

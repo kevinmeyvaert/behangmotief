@@ -1,0 +1,42 @@
+---
+import BlurHashImage from '@/components/BlurHashImage.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  src: string;
+  alt: string;
+  blurhash: string;
+  imageClass?: string;
+  imageContainerClass?: string;
+}
+
+const {
+  title,
+  description,
+  src,
+  alt,
+  blurhash,
+  imageClass = '',
+  imageContainerClass = '',
+} = Astro.props;
+---
+
+<div class="text-center">
+  <div class:list={['mb-4 aspect-[3/2] bg-gray-200 w-full', imageContainerClass]}>
+    <BlurHashImage
+      src={src}
+      alt={alt}
+      blurhash={blurhash}
+      width={750}
+      height={500}
+      class={imageClass}
+    />
+  </div>
+  <div class="px-6 pb-6">
+    <h3 class="text-xl font-semibold mb-4">{title}</h3>
+    <p class="text-gray-600">
+      {description}
+    </p>
+  </div>
+</div>

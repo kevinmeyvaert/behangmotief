@@ -1,6 +1,7 @@
 /**
  * Centralized site metadata for SEO and Schema.org structured data
  */
+import { routes } from '@/i18n/ui';
 
 const siteMetadata = {
   name: 'Behangmotief',
@@ -160,6 +161,7 @@ export function getOrganizationSchema(locale: 'nl' | 'en' = 'nl') {
  */
 export function getWebSiteSchema(locale: 'nl' | 'en' = 'nl') {
   const { name, url } = siteMetadata;
+  const archiveRoute = routes[locale].archive;
 
   return {
     '@context': 'https://schema.org',
@@ -175,7 +177,7 @@ export function getWebSiteSchema(locale: 'nl' | 'en' = 'nl') {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${url}/${locale}/archive?search={search_term_string}`,
+        urlTemplate: `${url}/${locale}/${archiveRoute}?search={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -208,6 +210,7 @@ export function getImageGallerySchema(
     '@type': 'ImageGallery',
     name: albumData.title,
     description: albumData.description,
+    inLanguage: locale === 'nl' ? 'nl-BE' : 'en-US',
     author: {
       '@type': 'Person',
       '@id': `${url}#person`,
@@ -265,7 +268,8 @@ export function getImageGallerySchema(
  * Generate CollectionPage schema for archive page
  */
 export function getCollectionPageSchema(locale: 'nl' | 'en' = 'nl') {
-  const { url, name } = siteMetadata;
+  const { url } = siteMetadata;
+  const archiveRoute = routes[locale].archive;
 
   return {
     '@context': 'https://schema.org',
@@ -275,7 +279,7 @@ export function getCollectionPageSchema(locale: 'nl' | 'en' = 'nl') {
       locale === 'nl'
         ? 'Volledige collectie muziek- en festivalfoto\'s door Kevin Meyvaert'
         : 'Complete collection of music and festival photography by Kevin Meyvaert',
-    url: `${url}/${locale}/archive`,
+    url: `${url}/${locale}/${archiveRoute}`,
     mainEntity: {
       '@type': 'ImageGallery',
       author: {

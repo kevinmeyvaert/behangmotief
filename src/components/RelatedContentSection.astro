@@ -1,14 +1,9 @@
 ---
-import { RELATED_ALBUMS } from '@/lib/queries';
 import RelatedContent from './RelatedContent.astro';
-import type {
-  AlbumQuery,
-  Post,
-  RelatedPostsQuery,
-} from '@/types/wannabes.types';
-import { fetcher } from '@/lib/graphql-client';
+import type { AlbumQuery } from '@/types/wannabes.types';
 import { getLangFromUrl, useTranslations } from '@/i18n/utils';
 import type { ui } from '@/i18n/ui';
+import { albumsService } from '@/services/albums.service';
 
 interface Props {
   post: AlbumQuery['post'];
@@ -17,15 +12,12 @@ interface Props {
 
 const { post, locale } = Astro.props;
 
-const { sameArtist, sameVenue } = await fetcher<RelatedPostsQuery>(
-  RELATED_ALBUMS,
-  {
-    artistSlug: post.artist.slug,
-    venueSlug: post.venue.slug,
-  }
-);
-const hasMoreFromArtist = sameArtist.data?.length - 1 > 0;
-const hasMoreAtVenue = sameVenue.data?.length - 1 > 0;
+const { sameArtist, sameVenue } = await albumsService.getRelatedAlbums({
+  artistSlug: post.artist.slug,
+  venueSlug: post.venue.slug,
+});
+const hasMoreFromArtist = sameArtist.length - 1 > 0;
+const hasMoreAtVenue = sameVenue.length - 1 > 0;
 
 // Use passed locale or try to detect from URL
 const lang = locale || getLangFromUrl(Astro.url);
@@ -37,7 +29,7 @@ const t = useTranslations(lang);
     {
       hasMoreFromArtist && (
         <RelatedContent
-          relatedPosts={sameArtist.data}
+          relatedPosts={sameArtist}
           title={t('album.more_from_artist').replace(
             '{artist}',
             post.artist.name
@@ -52,7 +44,7 @@ const t = useTranslations(lang);
     {
       hasMoreAtVenue && (
         <RelatedContent
-          relatedPosts={sameVenue.data}
+          relatedPosts={sameVenue}
           title={t('album.more_at_venue').replace('{venue}', post.venue.name)}
           postId={post.id}
           type="venue"

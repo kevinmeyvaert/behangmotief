@@ -28,7 +28,12 @@ const isGallery = images.length > 1;
 ---
 
 <div class={`base-lightbox ${className}`} data-lightbox-container>
-  <script type="application/json" data-lightbox-data set:html={JSON.stringify({ images, enableNavigation, enableUrlParams, triggerSelector })} />
+  <script
+    is:inline
+    type="application/json"
+    data-lightbox-data
+    set:html={JSON.stringify({ images, enableNavigation, enableUrlParams, triggerSelector })}
+  />
   <div
     class="lightbox-overlay hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
     data-lightbox-overlay
@@ -129,7 +134,7 @@ const isGallery = images.length > 1;
   </div>
 </div>
 
-<script type="module">
+<script is:inline type="module">
   // Try to import blurhash, but continue if it fails
   let decode = null;
   try {
@@ -226,7 +231,6 @@ const isGallery = images.length > 1;
         const index = this.getImageIndexById(imageId);
         if (index !== -1) {
           // Don't update URL again since we're responding to a popstate
-          const wasHidden = this.overlay.classList.contains('hidden');
           this.currentIndex = index;
           const image = this.images[index];
 
