@@ -19,6 +19,7 @@ const { relatedPosts, title, postId, className = '', type, locale } = Astro.prop
 // Use passed locale or try to detect from URL
 const lang = locale || getLangFromUrl(Astro.url);
 const translatePath = useTranslatedPath(lang);
+const albumBasePath = `${translatePath('/album')}/`;
 const filteredPosts = relatedPosts
   .filter((p) => p.id !== postId)
   .map(checkThumbnails)
@@ -32,7 +33,7 @@ const filteredPosts = relatedPosts
   >
     {
       filteredPosts.map((post) => (
-        <a href={`${translatePath('/album')}/${post.slug}`} class="group">
+        <a href={`${albumBasePath}${post.slug}/`} class="group">
           <article
             class="relative overflow-hidden"
             style={{

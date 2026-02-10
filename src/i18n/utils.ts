@@ -2,6 +2,10 @@ import { ui, defaultLang, routes } from './ui';
 
 type Language = keyof typeof ui;
 type TranslationDictionary = (typeof ui)[typeof defaultLang];
+export const localeToHreflang: Record<Language, string> = {
+  en: 'en-US',
+  nl: 'nl-BE',
+};
 
 export function getLangFromUrl(url: URL) {
   const [, lang] = url.pathname.split('/');
@@ -33,6 +37,10 @@ export function useTranslatedPath(lang: Language) {
 export function getAlternateUrls(url: URL, siteUrl: string) {
   const currentLang = getLangFromUrl(url);
   const pathname = url.pathname;
+  const withTrailingSlash = (value: string) => {
+    if (value === '/') return value;
+    return value.endsWith('/') ? value : `${value}/`;
+  };
 
   // Remove the current locale from the pathname
   const pathWithoutLocale = pathname.replace(`/${currentLang}`, '');
@@ -48,7 +56,7 @@ export function getAlternateUrls(url: URL, siteUrl: string) {
 
     if (pathSegments.length === 0) {
       // Homepage
-      alternates[lang] = `${siteUrl}/${lang}`;
+      alternates[localeToHreflang[typedLang]] = `${siteUrl}/${lang}/`;
     } else {
       // Check if the first segment is a translatable route
       const firstSegment = pathSegments[0];
@@ -69,7 +77,7 @@ export function getAlternateUrls(url: URL, siteUrl: string) {
         translatedPath = `/${translatedSegment}${restOfPath ? '/' + restOfPath : ''}`;
       }
 
-      alternates[lang] = `${siteUrl}/${lang}${translatedPath}`;
+      alternates[localeToHreflang[typedLang]] = `${siteUrl}${withTrailingSlash(`/${lang}${translatedPath}`)}`;
     }
   });
 

@@ -15,6 +15,7 @@ interface Props {
 const { posts, loading = 'lazy' } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const translatePath = useTranslatedPath(lang);
+const albumBasePath = `${translatePath('/album')}/`;
 ---
 
 <MasonryGrid>
@@ -22,7 +23,7 @@ const translatePath = useTranslatedPath(lang);
     posts.map(checkThumbnails).map((post) => {
       return (
         <a
-          href={`${translatePath('/album')}/${post.slug}`}
+          href={`${albumBasePath}${post.slug}/`}
           class="group masonry-item"
         >
           <article

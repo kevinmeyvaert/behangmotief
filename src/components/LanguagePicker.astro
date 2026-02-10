@@ -32,6 +32,10 @@ if (currentSegment) {
 // Get language codes array for positioning
 const langCodes = Object.keys(languages);
 const activeIndex = langCodes.indexOf(lang);
+const withTrailingSlash = (value: string) => {
+  if (value === '/') return value;
+  return value.endsWith('/') ? value : `${value}/`;
+};
 ---
 
 <style>
@@ -151,7 +155,7 @@ const activeIndex = langCodes.indexOf(lang);
       
       return (
         <a
-          href={`/${code}${path}`}
+          href={withTrailingSlash(`/${code}${path}`)}
           class={`language-option ${theme} ${isActive ? 'active' : 'inactive'}`}
           aria-current={isActive ? 'page' : undefined}
           aria-label={`Switch to ${label}`}

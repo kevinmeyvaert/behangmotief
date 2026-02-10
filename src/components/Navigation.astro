@@ -16,24 +16,32 @@ interface Props {
 const { theme = 'light' } = Astro.props;
 const currentPath = new URL(Astro.request.url).pathname;
 const translatePath = useTranslatedPath(lang);
+const withTrailingSlash = (value: string) => {
+  if (value === '/') return value;
+  return value.endsWith('/') ? value : `${value}/`;
+};
+const homePath = `/${lang}/`;
+const archivePath = withTrailingSlash(translatePath('archive'));
+const albumPath = withTrailingSlash(translatePath('album'));
+const normalizedCurrentPath = withTrailingSlash(currentPath);
 
-const isHomeActive = currentPath === `/${lang}`;
+const isHomeActive = normalizedCurrentPath === homePath;
 
 const isArchiveActive =
-  currentPath === translatePath('archive') ||
-  currentPath.startsWith(translatePath('album'));
+  normalizedCurrentPath === archivePath ||
+  normalizedCurrentPath.startsWith(albumPath);
 ---
 
 <nav>
   <div class="hidden md:flex gap-8 items-center">
     <a
-      href={`/${lang}`}
+      href={homePath}
       class={`${theme === 'dark' ? 'text-white' : 'text-black'} hover:opacity-70 transition-opacity ${isHomeActive ? 'border-b-2 border-current' : ''}`}
     >
       {t('nav.home')}
     </a>
     <a
-      href={translatePath('archive')}
+      href={archivePath}
       class={`${theme === 'dark' ? 'text-white' : 'text-black'} hover:opacity-70 transition-opacity ${isArchiveActive ? 'border-b-2 border-current' : ''}`}
     >
       {t('nav.archive')}
@@ -90,13 +98,13 @@ const isArchiveActive =
       <div class="flex flex-col items-center justify-center h-full">
         <div class="flex flex-col space-y-8 text-2xl -mt-16 text-center">
           <a
-            href={`/${lang}`}
+            href={homePath}
             class={`${theme === 'dark' ? 'text-white' : 'text-black'} hover:opacity-70 transition-opacity ${isHomeActive ? 'font-bold' : ''}`}
           >
             {t('nav.home')}
           </a>
           <a
-            href={translatePath('archive')}
+            href={archivePath}
             class={`${theme === 'dark' ? 'text-white' : 'text-black'} hover:opacity-70 transition-opacity ${isArchiveActive ? 'font-bold' : ''}`}
           >
             {t('nav.archive')}

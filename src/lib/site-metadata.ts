@@ -169,7 +169,7 @@ export function getWebSiteSchema(locale: 'nl' | 'en' = 'nl') {
     '@id': `${url}#website`,
     name,
     url,
-    inLanguage: locale === 'nl' ? 'nl-BE' : 'en',
+    inLanguage: locale === 'nl' ? 'nl-BE' : 'en-US',
     publisher: {
       '@id': `${url}#organization`,
     },
@@ -177,7 +177,7 @@ export function getWebSiteSchema(locale: 'nl' | 'en' = 'nl') {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${url}/${locale}/${archiveRoute}?search={search_term_string}`,
+        urlTemplate: `${url}/${locale}/${archiveRoute}/?search={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -279,7 +279,7 @@ export function getCollectionPageSchema(locale: 'nl' | 'en' = 'nl') {
       locale === 'nl'
         ? 'Volledige collectie muziek- en festivalfoto\'s door Kevin Meyvaert'
         : 'Complete collection of music and festival photography by Kevin Meyvaert',
-    url: `${url}/${locale}/${archiveRoute}`,
+    url: `${url}/${locale}/${archiveRoute}/`,
     mainEntity: {
       '@type': 'ImageGallery',
       author: {

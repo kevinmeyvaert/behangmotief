@@ -42,13 +42,22 @@ const descriptionTemplate = descriptionTemplates[deterministicIndex] || '';
 const description = descriptionTemplate
   .replace('{venue}', post.venue.name)
   .replace('{artist}', post.artist.name);
+const publishedDate = new Date(post.date);
+const publishedTime = Number.isNaN(publishedDate.getTime())
+  ? undefined
+  : publishedDate.toISOString();
+const publishedDateOnly = publishedTime?.split('T')[0];
+const albumOgImage = post.images[0]
+  ? ImageUrlBuilder.hero(post.images[0].hires)
+  : undefined;
+const albumOgImageAlt = `${post.artist.name} at ${post.venue.name}`;
 
 // Generate ImageGallery structured data for the album
 const imageGallerySchema = getImageGallerySchema(
   {
     title: `${post.artist.name} at ${post.venue.name}`,
     description,
-    date: new Date(post.date).toISOString().split('T')[0],
+    date: publishedDateOnly,
     artist: post.artist.name,
     venue: post.venue.name,
     images: post.images.slice(0, 10).map((img) => ({
@@ -66,6 +75,10 @@ const imageGallerySchema = getImageGallerySchema(
   title={`${post.artist.name} live at ${post.venue.name} | Behangmotief`}
   description={description}
   locale={lang}
+  ogType="article"
+  ogImage={albumOgImage}
+  ogImageAlt={albumOgImageAlt}
+  publishedTime={publishedTime}
 >
   <StructuredData slot="structured-data" schema={imageGallerySchema} />
 

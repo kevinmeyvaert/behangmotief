@@ -35,11 +35,21 @@ const { albums, pagination } = await albumsService.searchAlbums({
 });
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
-const archiveRoute = translatePath('/archive');
+const archiveRoute = `${translatePath('/archive')}/`;
 const collectionPageSchema = getCollectionPageSchema(locale);
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://behangmotief.be';
+const canonicalArchiveUrl = `${siteUrl}${archiveRoute}`;
+const isFiltered = Boolean(searchParam);
+const isPaginated = currentPage > 1;
 ---
 
-<Layout title={t('archive.title')} description={t('archive.description')} locale={locale}>
+<Layout
+  title={t('archive.title')}
+  description={t('archive.description')}
+  locale={locale}
+  canonicalUrl={canonicalArchiveUrl}
+  noindex={isFiltered || isPaginated}
+>
   <StructuredData slot="structured-data" schema={collectionPageSchema} />
 
   <Header />

@@ -11,6 +11,7 @@ interface Props {
 const { theme = 'light', absolute = false } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const homePath = `/${lang}/`;
 ---
 
 <header
@@ -22,7 +23,7 @@ const t = useTranslations(lang);
 >
   <div class="container mx-auto px-4 md:px-0">
     <div class="flex justify-between items-center h-[150px]">
-      <a href={`/${lang}`}>
+      <a href={homePath}>
         <div class="flex items-center">
           <Image
             src="/logo.svg"

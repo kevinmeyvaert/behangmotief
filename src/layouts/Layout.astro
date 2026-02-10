@@ -4,7 +4,7 @@ import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import StructuredData from '@/components/StructuredData.astro';
 import '../styles/global.css';
-import { getAlternateUrls } from '@/i18n/utils';
+import { getAlternateUrls, localeToHreflang } from '@/i18n/utils';
 import { defaultLang } from '@/i18n/ui';
 import {
   getPersonSchema,
@@ -16,14 +16,57 @@ interface Props {
   title: string;
   description: string;
   locale: string;
+  canonicalUrl?: string;
+  noindex?: boolean;
+  ogType?: 'website' | 'article';
+  ogImage?: string;
+  ogImageAlt?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
 }
 
-const { title, description, locale } = Astro.props;
+const {
+  title,
+  description,
+  locale,
+  canonicalUrl,
+  noindex = false,
+  ogType = 'website',
+  ogImage,
+  ogImageAlt,
+  publishedTime,
+  modifiedTime,
+} = Astro.props;
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://behangmotief.be';
 const alternateUrls = getAlternateUrls(Astro.url, siteUrl);
 
 // Generate base structured data for all pages
 const lang = locale.split('-')[0] as 'nl' | 'en';
+const normalizePathname = (pathname: string) => {
+  if (pathname === '/') return '/';
+  return pathname.endsWith('/') ? pathname : `${pathname}/`;
+};
+
+const normalizedPathname = normalizePathname(Astro.url.pathname);
+const defaultCanonicalUrl = `${siteUrl}${normalizedPathname}`;
+const resolvedCanonicalUrl = canonicalUrl
+  ? new URL(canonicalUrl, siteUrl).toString()
+  : defaultCanonicalUrl;
+const robotsContent = noindex ? 'noindex,follow' : 'index,follow';
+const ogLocale = localeToHreflang[lang].replace('-', '_');
+const ogLocaleAlternates = Object.values(localeToHreflang)
+  .filter((value) => value !== localeToHreflang[lang])
+  .map((value) => value.replace('-', '_'));
+const htmlLang = localeToHreflang[lang] || locale;
+const resolvedOgImage = ogImage
+  ? new URL(ogImage, siteUrl).toString()
+  : `${siteUrl}/profile.jpg`;
+const resolvedOgImageAlt = ogImageAlt
+  || (lang === 'nl'
+    ? 'Behangmotief portfolio van muziek- en festivalfotografie'
+    : 'Behangmotief music and festival photography portfolio');
+const xDefaultUrl = `${siteUrl}/${defaultLang}/`;
+
 const baseStructuredData = [
   getPersonSchema(lang),
   getOrganizationSchema(lang),
@@ -32,22 +75,49 @@ const baseStructuredData = [
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={htmlLang}>
   <head>
     <meta charset="UTF-8" />
+    <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content={robotsContent} />
     <meta name="viewport" content="width=device-width" />
+    <link rel="canonical" href={resolvedCanonicalUrl} />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={resolvedCanonicalUrl} />
+    <meta property="og:site_name" content="Behangmotief" />
+    <meta property="og:locale" content={ogLocale} />
+    {ogLocaleAlternates.map((value) => (
+      <meta property="og:locale:alternate" content={value} />
+    ))}
+    <meta property="og:image" content={resolvedOgImage} />
+    <meta property="og:image:alt" content={resolvedOgImageAlt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={resolvedOgImage} />
+    <meta name="twitter:image:alt" content={resolvedOgImageAlt} />
+
+    {ogType === 'article' && publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {ogType === 'article' && modifiedTime && (
+      <meta property="article:modified_time" content={modifiedTime} />
+    )}
 
     {/* Hreflang tags for language variants */}
-    {Object.entries(alternateUrls).map(([lang, url]) => (
-      <link rel="alternate" hreflang={lang} href={url} />
+    {Object.entries(alternateUrls).map(([hreflang, url]) => (
+      <link rel="alternate" hreflang={hreflang} href={url} />
     ))}
     {/* x-default pointing to the default language (Dutch) */}
-    <link rel="alternate" hreflang="x-default" href={alternateUrls[defaultLang]} />
+    <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />
 
     {/* Base structured data: Person, Organization, WebSite */}
     <StructuredData schema={baseStructuredData} />

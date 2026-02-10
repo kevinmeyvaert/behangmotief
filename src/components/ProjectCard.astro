@@ -10,10 +10,11 @@ interface Props {
 }
 
 const { title, imageUrl, searchTerm, translatePath, blurhash } = Astro.props;
+const archivePath = `${translatePath('/archive')}/`;
 ---
 
 <a
-  href={`${translatePath('/archive')}?search=${encodeURIComponent(searchTerm)}`}
+  href={`${archivePath}?search=${encodeURIComponent(searchTerm)}`}
   class="group relative overflow-hidden"
 >
   <BlurHashImage
