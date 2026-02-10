@@ -124,12 +124,19 @@ async function getAlbumSitemapPages() {
 
 const albumSitemapPages = await getAlbumSitemapPages();
 
+const isLocalDev = process.env.npm_lifecycle_event === 'dev';
+
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
   output: 'server',
-  trailingSlash: 'always',
+  trailingSlash: isLocalDev ? 'ignore' : 'always',
+  image: {
+    domains: ['images.wannabes.be'],
+  },
   adapter: vercel({
+    imageService: true,
+    devImageService: 'astro/assets/services/noop',
     isr: {
       exclude: ['/nl/archief/', '/en/archive/'],
     },

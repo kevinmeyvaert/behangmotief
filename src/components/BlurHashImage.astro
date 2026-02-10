@@ -1,6 +1,5 @@
 ---
 import { Image } from 'astro:assets';
-import { blurhashToDataUrl } from '@/lib/blurhash-placeholder';
 
 interface Props {
   src: string;
@@ -21,14 +20,17 @@ const {
   class: className = '',
   loading = 'lazy',
 } = Astro.props;
-
-const base64Image = await blurhashToDataUrl(blurhash);
+const hasBlurhash = Boolean(blurhash && blurhash.length >= 6);
 ---
 
-<div class="relative">
+<div
+  class="relative"
+  data-blurhash-container
+  data-blurhash={hasBlurhash ? blurhash : undefined}
+>
   <div
-    class="absolute inset-0 bg-center bg-cover bg-no-repeat"
-    style={`background-image: url("${base64Image}");`}
+    class="absolute inset-0 bg-center bg-cover bg-no-repeat transition-opacity duration-300"
+    data-blurhash-placeholder
   >
   </div>
   <Image
@@ -38,5 +40,71 @@ const base64Image = await blurhashToDataUrl(blurhash);
     height={height}
     class={`relative ${className}`}
     loading={loading}
+    data-blurhash-image
   />
 </div>
+
+<script>
+  import { decode } from 'blurhash';
+
+  const WIDTH = 32;
+  const HEIGHT = 32;
+
+  const renderBlurhashPlaceholder = (container: Element) => {
+    if (!(container instanceof HTMLElement) || container.dataset.blurhashReady === '1') {
+      return;
+    }
+
+    const blurhash = container.dataset.blurhash;
+    if (!blurhash) {
+      return;
+    }
+
+    const placeholder = container.querySelector('[data-blurhash-placeholder]');
+    const image = container.querySelector('[data-blurhash-image]');
+    if (!(placeholder instanceof HTMLElement) || !(image instanceof HTMLImageElement)) {
+      return;
+    }
+
+    try {
+      const pixels = decode(blurhash, WIDTH, HEIGHT);
+      const imageData = new ImageData(new Uint8ClampedArray(pixels), WIDTH, HEIGHT);
+      const canvas = document.createElement('canvas');
+      canvas.width = WIDTH;
+      canvas.height = HEIGHT;
+      const context = canvas.getContext('2d');
+
+      if (context) {
+        context.putImageData(imageData, 0, 0);
+        placeholder.style.backgroundImage = `url("${canvas.toDataURL('image/png')}")`;
+      }
+    } catch {
+      // If blurhash decoding fails, keep default image loading behavior.
+    }
+
+    const hidePlaceholder = () => {
+      placeholder.style.opacity = '0';
+    };
+
+    if (image.complete) {
+      hidePlaceholder();
+    } else {
+      image.addEventListener('load', hidePlaceholder, { once: true });
+      image.addEventListener('error', hidePlaceholder, { once: true });
+    }
+
+    container.dataset.blurhashReady = '1';
+  };
+
+  const initBlurhashPlaceholders = () => {
+    document
+      .querySelectorAll('[data-blurhash-container]')
+      .forEach((container) => renderBlurhashPlaceholder(container));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBlurhashPlaceholders, { once: true });
+  } else {
+    initBlurhashPlaceholders();
+  }
+</script>

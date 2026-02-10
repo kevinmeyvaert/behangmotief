@@ -1,6 +1,5 @@
 ---
-import { Image } from 'astro:assets';
-import { blurhashToDataUrl } from '@/lib/blurhash-placeholder';
+import BlurHashImage from './BlurHashImage.astro';
 
 interface Props {
   images: {
@@ -11,28 +10,22 @@ interface Props {
 }
 
 const { images } = Astro.props;
-
-const imagesWithPlaceholder = await Promise.all(
-  images.map(async (image) => ({
-    ...image,
-    placeholder: await blurhashToDataUrl(image.blurhash),
-  }))
-);
 ---
 
 <div class="w-full h-full overflow-hidden relative" data-carousel>
   <div class="h-full flex transition-transform duration-500 ease-out" data-carousel-track>
     {
-      imagesWithPlaceholder.map((image, index) => (
+      images.map((image, index) => (
         <div class="w-full h-full flex-none">
           <div class="relative h-full">
-            <Image
+            <BlurHashImage
               src={image.src}
               alt={image.alt}
+              blurhash={image.blurhash}
+              width={2500}
+              height={2500}
               loading={index === 0 || index === 1 ? 'eager' : 'lazy'}
               class="w-full h-full object-cover"
-              inferSize
-              style={`background: url(${image.placeholder}); background-size: cover; background-position: center;`}
             />
             <div class="absolute inset-0 bg-black/30" />
           </div>
