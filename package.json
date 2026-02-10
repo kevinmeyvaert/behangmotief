@@ -7,38 +7,38 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "codegen": "graphql-codegen -c wannabes.yml"
+    "codegen": "graphql-codegen -c wannabes.yml",
+    "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.0",
     "@astrojs/sitemap": "^3.6.0",
     "@astrojs/vercel": "^9.0.2",
     "@tailwindcss/vite": "^4.0.17",
-    "@types/react": "^19.0.12",
-    "@types/react-dom": "^19.0.4",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "astro": "^5.14.6",
     "blurhash": "^2.0.5",
     "graphql": "^16.10.0",
     "graphql-request": "^7.1.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "sharp": "^0.33.5",
     "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.6",
     "@graphql-codegen/cli": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^5.0.6",
-    "@types/dat.gui": "^0.7.13",
     "@types/node": "^24.10.1",
-    "autoprefixer": "^10.4.21",
-    "dat.gui": "^0.7.9",
     "knip": "^5.71.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.2"
+    "tailwindcss": "^4.1.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
   },
   "overrides": {
     "path-to-regexp": "^8.3.0"
+  },
+  "knip": {
+    "ignoreDependencies": [
+      "@graphql-codegen/typescript-operations"
+    ]
   }
 }

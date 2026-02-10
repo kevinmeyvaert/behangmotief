@@ -1,8 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-import react from '@astrojs/react';
-
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 
@@ -20,15 +18,17 @@ export default defineConfig({
       enabled: true,
     },
   }),
-  integrations: [react(), sitemap({
-    i18n: {
-      defaultLocale: 'nl',
-      locales: {
-        en: 'en-US',
-        nl: 'nl-BE',
+  integrations: [
+    sitemap({
+      i18n: {
+        defaultLocale: 'nl',
+        locales: {
+          en: 'en-US',
+          nl: 'nl-BE',
+        },
       },
-    },
-  })],
+    }),
+  ],
 
   vite: {
     plugins: [tailwindcss()]
