@@ -25,6 +25,7 @@ const { images } = Astro.props;
               width={2500}
               height={2500}
               loading={index === 0 || index === 1 ? 'eager' : 'lazy'}
+              containerClass="w-full h-full"
               class="w-full h-full object-cover"
             />
             <div class="absolute inset-0 bg-black/30" />

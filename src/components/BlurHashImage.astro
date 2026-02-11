@@ -8,6 +8,7 @@ interface Props {
   height: number;
   blurhash: string;
   class?: string;
+  containerClass?: string;
   loading?: 'lazy' | 'eager';
 }
 
@@ -18,13 +19,14 @@ const {
   height,
   blurhash,
   class: className = '',
+  containerClass = '',
   loading = 'lazy',
 } = Astro.props;
 const hasBlurhash = Boolean(blurhash && blurhash.length >= 6);
 ---
 
 <div
-  class="relative"
+  class:list={['relative', containerClass]}
   data-blurhash-container
   data-blurhash={hasBlurhash ? blurhash : undefined}
 >
