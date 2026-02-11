@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
+import { getLangFromUrl, useTranslatedPath, useTranslations } from '../../../i18n/utils';
 import { albumsService } from '@/services/albums.service';
 import AlbumLightbox from '@/components/AlbumLightbox.astro';
 import BlurHashImage from '@/components/BlurHashImage.astro';
@@ -14,6 +14,8 @@ import { getImageGallerySchema } from '@/lib/site-metadata';
 const { slug } = Astro.params;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const archivePath = `${translatePath('/archive')}/`;
 
 // Join the slug array into a path string
 const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
@@ -86,6 +88,15 @@ const imageGallerySchema = getImageGallerySchema(
   <main>
     <article>
       <section class="container mx-auto mb-12 px-4 md:px-0">
+        <a
+          href={archivePath}
+          data-archive-root={archivePath}
+          data-back-link
+          class="inline-flex items-center gap-2 mb-8 text-gray-500 hover:text-black transition-colors"
+        >
+          <span aria-hidden="true">←</span>
+          {t('album.back')}
+        </a>
         <header class="text-center mb-12">
           <h1 class="text-4xl font-bold">{post.artist.name}</h1>
           <p class="text-gray-500">
@@ -130,4 +141,49 @@ const imageGallerySchema = getImageGallerySchema(
       <RelatedContentSection server:defer post={post} locale={lang} />
     </article>
   </main>
+  <script>
+    const backLink = document.querySelector('[data-back-link]');
+
+    if (backLink instanceof HTMLAnchorElement) {
+      const archiveRoot = backLink.dataset.archiveRoot || '/';
+      const withTrailingSlash = (value: string) =>
+        value.endsWith('/') ? value : `${value}/`;
+      const normalizedArchiveRoot = withTrailingSlash(archiveRoot);
+      const toArchivePath = (candidate: string | null) => {
+        if (!candidate) return null;
+
+        try {
+          const parsed = new URL(candidate, window.location.origin);
+          const parsedPathname = withTrailingSlash(parsed.pathname);
+
+          if (
+            parsed.origin === window.location.origin &&
+            parsedPathname.startsWith(normalizedArchiveRoot)
+          ) {
+            return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+          }
+
+          return null;
+        } catch {
+          return null;
+        }
+      };
+
+      backLink.addEventListener('click', (event) => {
+        if (window.history.length > 1) {
+          event.preventDefault();
+          const archiveReferrerPath = toArchivePath(document.referrer);
+          if (archiveReferrerPath) {
+            window.location.assign(archiveReferrerPath);
+          } else {
+            window.history.back();
+          }
+          return;
+        }
+
+        event.preventDefault();
+        window.location.assign(archiveRoot);
+      });
+    }
+  </script>
 </Layout>
