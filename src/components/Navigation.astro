@@ -29,6 +29,7 @@ const isHomeActive = normalizedCurrentPath === homePath;
 
 const isArchiveActive =
   normalizedCurrentPath === archivePath ||
+  normalizedCurrentPath.startsWith(archivePath) ||
   normalizedCurrentPath.startsWith(albumPath);
 ---
 

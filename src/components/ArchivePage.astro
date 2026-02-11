@@ -11,21 +11,24 @@ import { getCollectionPageSchema } from '@/lib/site-metadata';
 
 interface Props {
   locale: 'en' | 'nl';
+  page?: string;
 }
 
-const { locale } = Astro.props;
+const { locale, page } = Astro.props;
+
+Astro.response.headers.set('Cache-Control', 'private, no-store, max-age=0');
 
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
 const searchParam = Astro.url.searchParams.get('search') || '';
-const rawCurrentPage = Number.parseInt(
+const pageFromPath = page ? Number.parseInt(page, 10) : Number.NaN;
+const pageFromQuery = Number.parseInt(
   Astro.url.searchParams.get('page') || '1',
   10
 );
-const currentPage = Number.isFinite(rawCurrentPage) && rawCurrentPage > 0
-  ? rawCurrentPage
-  : 1;
+const rawCurrentPage = Number.isFinite(pageFromPath) ? pageFromPath : pageFromQuery;
+const currentPage = Number.isFinite(rawCurrentPage) && rawCurrentPage > 0 ? rawCurrentPage : 1;
 const POSTS_PER_PAGE = 15;
 
 const { albums, pagination } = await albumsService.searchAlbums({

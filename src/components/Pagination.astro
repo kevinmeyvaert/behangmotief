@@ -14,16 +14,18 @@ const { currentPage, totalPages, baseUrl } = Astro.props;
 // Don't render pagination if there's only one page
 if (totalPages <= 1) return null;
 
+const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
 const prevPage = currentPage > 1 ? currentPage - 1 : null;
 const nextPage = currentPage < totalPages ? currentPage + 1 : null;
 
 // Function to generate page URL with existing query params
 const getPageUrl = (page: number) => {
-  const url = new URL(baseUrl, Astro.url);
   const searchParams = new URLSearchParams(Astro.url.searchParams);
-  searchParams.set('page', page.toString());
-  url.search = searchParams.toString();
-  return url.pathname + url.search;
+  searchParams.delete('page');
+  const pathname = page === 1 ? normalizedBaseUrl : `${normalizedBaseUrl}${page}/`;
+  const queryString = searchParams.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
 };
 
 // Function to get visible page numbers
