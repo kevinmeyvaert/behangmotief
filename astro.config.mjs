@@ -137,9 +137,6 @@ export default defineConfig({
   adapter: vercel({
     imageService: true,
     devImageService: 'astro/assets/services/noop',
-    isr: {
-      exclude: ['/nl/archief/', '/en/archive/'],
-    },
     webAnalytics: {
       enabled: true,
     },
