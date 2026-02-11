@@ -18,27 +18,38 @@ const description =
     <main id="gallery-app">
       <div id="scene-root" aria-label="3D gallery scene"></div>
 
-      <section id="auth-panel" class="overlay-panel">
-        <p class="kicker">Behangmotief / Gallery</p>
-        <h1>Connect Spotify To Enter</h1>
-        <p id="status-text">
-          Log in with Spotify so the gallery can be curated around your favorite artists.
-        </p>
-        <button id="spotify-login" class="cta-button">Login with Spotify</button>
-        <p class="meta-note">
-          Scope used: <code>user-top-read</code>. No Spotify password is handled here.
-        </p>
-        <p class="meta-note">
-          Redirect URI: <code id="redirect-uri-label"></code>
-        </p>
-      </section>
+      <div id="lobby-shell" class="lobby-shell">
+        <header class="lobby-header">
+          <a class="lobby-brand" href="/nl/" aria-label="Behangmotief home">
+            <img src="/logo.svg" alt="Behangmotief" />
+            <span>music and festival photography</span>
+          </a>
+          <p class="lobby-kicker">Spotify Curated 3D Room</p>
+        </header>
 
-      <button id="enter-gallery" class="enter-button hidden" type="button">Enter Gallery</button>
+        <section id="auth-panel" class="overlay-panel">
+          <p class="kicker">Behangmotief / Gallery</p>
+          <h1>Walk Through Your Listening Universe</h1>
+          <p id="status-text">
+            Log in with Spotify to map your top artists to Kevin Meyvaert photo moments in a 3D space.
+          </p>
+          <div class="lobby-actions">
+            <button id="spotify-login" class="cta-button">Login with Spotify</button>
+            <button id="enter-gallery" class="enter-button hidden" type="button">Enter Gallery</button>
+          </div>
+          <p class="meta-note">
+            Scope: <code>user-top-read</code> · keyboard navigation with mouse-look.
+          </p>
+          <p class="meta-note">
+            Redirect URI: <code id="redirect-uri-label"></code>
+          </p>
+        </section>
 
-      <section id="artists-panel" class="artists-panel hidden">
-        <p class="panel-title">Top Artists</p>
-        <ul id="artists-list"></ul>
-      </section>
+        <section id="artists-panel" class="artists-panel hidden">
+          <p class="panel-title">Matched from your Spotify profile</p>
+          <ul id="artists-list"></ul>
+        </section>
+      </div>
 
       <p id="controls-hint" class="controls-hint hidden">
         Press Esc to leave
@@ -51,6 +62,9 @@ const description =
       // @ts-nocheck
       import * as THREE from 'three';
       import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+      import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+      import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+      import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
       const SPOTIFY_CLIENT_ID = import.meta.env.PUBLIC_SPOTIFY_CLIENT_ID;
       function normalizeRedirectUri(rawValue) {
@@ -74,6 +88,7 @@ const description =
       const PKCE_VERIFIER_KEY = 'spotify_gallery_pkce_verifier';
       const PKCE_STATE_KEY = 'spotify_gallery_pkce_state';
 
+      const lobbyShell = document.getElementById('lobby-shell');
       const authPanel = document.getElementById('auth-panel');
       const statusText = document.getElementById('status-text');
       const loginButton = document.getElementById('spotify-login');
@@ -336,12 +351,19 @@ const description =
       }
 
       function getPerformanceProfile() {
+        const qualityParam = new URLSearchParams(window.location.search).get('quality');
+        const forcedTier =
+          qualityParam === 'high' || qualityParam === 'medium' || qualityParam === 'low'
+            ? qualityParam
+            : null;
         const deviceMemory = Number(navigator.deviceMemory || 8);
         const cores = Number(navigator.hardwareConcurrency || 8);
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        const low = prefersReducedMotion || deviceMemory <= 4 || cores <= 4;
-        const medium = !low && (deviceMemory <= 8 || cores <= 8);
+        const autoLow = prefersReducedMotion || deviceMemory <= 4 || cores <= 4;
+        const low = forcedTier === 'low' || (!forcedTier && autoLow);
+        const medium =
+          forcedTier === 'medium' || (!forcedTier && !autoLow && (deviceMemory <= 8 || cores <= 8));
 
         if (low) {
           return {
@@ -360,6 +382,10 @@ const description =
             enablePendantPointLights: false,
             enableSceneAnimation: false,
             enableLightPulsing: false,
+            enableBloom: false,
+            bloomStrength: 0,
+            bloomRadius: 0,
+            bloomThreshold: 1,
           };
         }
 
@@ -375,11 +401,15 @@ const description =
             maxAnisotropy: 4,
             stripStep: 10.5,
             pendantCount: 12,
-            frameLightStride: 4,
+            frameLightStride: 0,
             enableCeilingPointLights: true,
             enablePendantPointLights: false,
             enableSceneAnimation: true,
             enableLightPulsing: true,
+            enableBloom: true,
+            bloomStrength: 0.62,
+            bloomRadius: 0.55,
+            bloomThreshold: 0.9,
           };
         }
 
@@ -394,11 +424,15 @@ const description =
           maxAnisotropy: 8,
           stripStep: 8.8,
           pendantCount: 16,
-          frameLightStride: 3,
+          frameLightStride: 0,
           enableCeilingPointLights: true,
           enablePendantPointLights: true,
           enableSceneAnimation: true,
           enableLightPulsing: true,
+          enableBloom: true,
+          bloomStrength: 1.05,
+          bloomRadius: 0.7,
+          bloomThreshold: 0.88,
         };
       }
 
@@ -458,6 +492,107 @@ const description =
         return texture;
       }
 
+      function createWoodFloorTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        ctx.fillStyle = '#7f5d41';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const plankCount = 18;
+        const plankHeight = canvas.height / plankCount;
+        for (let i = 0; i < plankCount; i += 1) {
+          const y = i * plankHeight;
+          const hueShift = (i % 3) * 6;
+          ctx.fillStyle = `hsl(${28 + hueShift} 36% ${36 + (i % 4)}%)`;
+          ctx.fillRect(0, y, canvas.width, plankHeight - 1);
+
+          for (let j = 0; j < 22; j += 1) {
+            const grainX = Math.random() * canvas.width;
+            const grainY = y + Math.random() * plankHeight;
+            const grainW = 22 + Math.random() * 52;
+            const grainH = 1 + Math.random() * 1.4;
+            ctx.fillStyle = `rgba(255,255,255,${0.02 + Math.random() * 0.04})`;
+            ctx.fillRect(grainX, grainY, grainW, grainH);
+          }
+        }
+
+        ctx.fillStyle = 'rgba(30, 20, 12, 0.26)';
+        for (let i = 1; i < plankCount; i += 1) {
+          const y = i * plankHeight;
+          ctx.fillRect(0, y - 1, canvas.width, 2);
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(3.2, 9.4);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      function createPlasterTexture(baseColor = '#efece5') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 768;
+        canvas.height = 768;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < 7000; i += 1) {
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+          const alpha = 0.01 + Math.random() * 0.03;
+          const tone = 188 + Math.floor(Math.random() * 42);
+          ctx.fillStyle = `rgba(${tone},${tone - 6},${tone - 10},${alpha})`;
+          ctx.fillRect(x, y, 2, 2);
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(5.6, 2.3);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      function createCeilingPanelTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        ctx.fillStyle = '#11151d';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const cell = 128;
+        for (let y = 0; y < canvas.height; y += cell) {
+          for (let x = 0; x < canvas.width; x += cell) {
+            const isRaised = ((x / cell) + (y / cell)) % 2 === 0;
+            ctx.fillStyle = isRaised ? '#1a1f29' : '#0f131b';
+            ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.strokeRect(x + 2, y + 2, cell - 4, cell - 4);
+          }
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2.8, 8.4);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
       function disposeMaterial(material) {
         if (!material) return;
         if (material.map) material.map.dispose();
@@ -488,12 +623,27 @@ const description =
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, profile.pixelRatioCap));
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = profile.tier === 'high' ? 1.03 : 0.98;
         renderer.shadowMap.enabled = false;
         container.appendChild(renderer.domElement);
         const textureAnisotropy = Math.min(
           renderer.capabilities.getMaxAnisotropy(),
           profile.maxAnisotropy
         );
+
+        let composer = null;
+        if (profile.enableBloom) {
+          composer = new EffectComposer(renderer);
+          composer.addPass(new RenderPass(scene, camera));
+          const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(container.clientWidth, container.clientHeight),
+            profile.bloomStrength,
+            profile.bloomRadius,
+            profile.bloomThreshold
+          );
+          composer.addPass(bloomPass);
+        }
 
         const controls = new PointerLockControls(camera, renderer.domElement);
 
@@ -518,11 +668,55 @@ const description =
         const ceilingHeight = 6.2;
         const wallHalf = 8.9;
         const animatedLights = [];
+        const vibeLights = [];
+        const vibeGlowMaterials = [];
+        const enableVibeLights = profile.tier !== 'low';
+        const decorLevel = profile.tier === 'high' ? 2 : profile.tier === 'medium' ? 1 : 0;
+        const floorTexture = createWoodFloorTexture();
+        const wallTexture = createPlasterTexture('#f1eee8');
+        const backWallTexture = createPlasterTexture('#ebe7de');
+        const ceilingTexture = createCeilingPanelTexture();
+
+        if (enableVibeLights) {
+          const cyanWash = new THREE.PointLight('#2fd9ff', profile.tier === 'high' ? 0.55 : 0.36, 42);
+          cyanWash.position.set(-7.2, 3.5, corridorMid + corridorLength * 0.12);
+          scene.add(cyanWash);
+          vibeLights.push({
+            light: cyanWash,
+            base: profile.tier === 'high' ? 0.55 : 0.36,
+            phase: 0.4,
+            colorA: new THREE.Color('#30dfff'),
+            colorB: new THREE.Color('#4f7cff'),
+          });
+
+          const magentaWash = new THREE.PointLight('#ff3d9a', profile.tier === 'high' ? 0.62 : 0.42, 44);
+          magentaWash.position.set(7.4, 3.4, corridorMid - corridorLength * 0.1);
+          scene.add(magentaWash);
+          vibeLights.push({
+            light: magentaWash,
+            base: profile.tier === 'high' ? 0.62 : 0.42,
+            phase: 1.2,
+            colorA: new THREE.Color('#ff3b9d'),
+            colorB: new THREE.Color('#c643ff'),
+          });
+
+          const accentBack = new THREE.PointLight('#74ffb5', profile.tier === 'high' ? 0.28 : 0.2, 26);
+          accentBack.position.set(0, 2.8, corridorEnd + 2.4);
+          scene.add(accentBack);
+          vibeLights.push({
+            light: accentBack,
+            base: profile.tier === 'high' ? 0.28 : 0.2,
+            phase: 2.4,
+            colorA: new THREE.Color('#74ffb5'),
+            colorB: new THREE.Color('#56e9ff'),
+          });
+        }
 
         const floor = new THREE.Mesh(
           new THREE.PlaneGeometry(hallWidth, corridorLength + 26),
           new THREE.MeshStandardMaterial({
             color: '#7b7064',
+            map: floorTexture,
             roughness: 0.9,
             metalness: 0.05,
           })
@@ -536,6 +730,7 @@ const description =
           new THREE.PlaneGeometry(hallWidth, corridorLength + 26),
           new THREE.MeshStandardMaterial({
             color: '#16181f',
+            map: ceilingTexture,
             roughness: 0.95,
             metalness: 0.08,
           })
@@ -546,6 +741,7 @@ const description =
 
         const wallMaterial = new THREE.MeshStandardMaterial({
           color: '#f2efe8',
+          map: wallTexture,
           roughness: 0.92,
           metalness: 0.02,
         });
@@ -567,6 +763,7 @@ const description =
           new THREE.PlaneGeometry(wallHalf * 2, wallHeight),
           new THREE.MeshStandardMaterial({
             color: '#f4f2eb',
+            map: backWallTexture,
             roughness: 0.9,
             metalness: 0.02,
           })
@@ -574,6 +771,91 @@ const description =
         backWall.position.set(0, wallHeight / 2, corridorEnd);
         backWall.rotation.y = Math.PI;
         scene.add(backWall);
+
+        if (enableVibeLights) {
+          const leftRailMaterial = new THREE.MeshStandardMaterial({
+            color: '#19202f',
+            emissive: '#1dd6ff',
+            emissiveIntensity: profile.tier === 'high' ? 1.28 : 0.9,
+            roughness: 0.42,
+            metalness: 0.22,
+          });
+          const leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, corridorLength + 4), leftRailMaterial);
+          leftRail.position.set(-wallHalf + 0.24, 4.9, corridorMid);
+          scene.add(leftRail);
+          vibeGlowMaterials.push({
+            material: leftRailMaterial,
+            base: profile.tier === 'high' ? 1.28 : 0.9,
+            phase: 0.7,
+            colorA: new THREE.Color('#1dd6ff'),
+            colorB: new THREE.Color('#596bff'),
+          });
+
+          const rightRailMaterial = new THREE.MeshStandardMaterial({
+            color: '#21192d',
+            emissive: '#ff3c98',
+            emissiveIntensity: profile.tier === 'high' ? 1.35 : 0.95,
+            roughness: 0.42,
+            metalness: 0.22,
+          });
+          const rightRail = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.08, corridorLength + 4),
+            rightRailMaterial
+          );
+          rightRail.position.set(wallHalf - 0.24, 4.9, corridorMid);
+          scene.add(rightRail);
+          vibeGlowMaterials.push({
+            material: rightRailMaterial,
+            base: profile.tier === 'high' ? 1.35 : 0.95,
+            phase: 1.5,
+            colorA: new THREE.Color('#ff3c98'),
+            colorB: new THREE.Color('#bf4eff'),
+          });
+
+          const topBlueMaterial = new THREE.MeshStandardMaterial({
+            color: '#141d2f',
+            emissive: '#2dd9ff',
+            emissiveIntensity: profile.tier === 'high' ? 1.4 : 1.0,
+            roughness: 0.28,
+            metalness: 0.35,
+          });
+          const topBlueStrip = new THREE.Mesh(
+            new THREE.BoxGeometry(corridorLength + 2.8, 0.11, 0.11),
+            topBlueMaterial
+          );
+          topBlueStrip.position.set(-2.6, ceilingHeight - 0.22, corridorMid);
+          topBlueStrip.rotation.y = Math.PI / 2;
+          scene.add(topBlueStrip);
+          vibeGlowMaterials.push({
+            material: topBlueMaterial,
+            base: profile.tier === 'high' ? 1.4 : 1.0,
+            phase: 0.25,
+            colorA: new THREE.Color('#2dd9ff'),
+            colorB: new THREE.Color('#5c72ff'),
+          });
+
+          const topPinkMaterial = new THREE.MeshStandardMaterial({
+            color: '#2a1527',
+            emissive: '#ff3d9b',
+            emissiveIntensity: profile.tier === 'high' ? 1.45 : 1.02,
+            roughness: 0.28,
+            metalness: 0.35,
+          });
+          const topPinkStrip = new THREE.Mesh(
+            new THREE.BoxGeometry(corridorLength + 2.8, 0.11, 0.11),
+            topPinkMaterial
+          );
+          topPinkStrip.position.set(2.6, ceilingHeight - 0.22, corridorMid);
+          topPinkStrip.rotation.y = Math.PI / 2;
+          scene.add(topPinkStrip);
+          vibeGlowMaterials.push({
+            material: topPinkMaterial,
+            base: profile.tier === 'high' ? 1.45 : 1.02,
+            phase: 1.05,
+            colorA: new THREE.Color('#ff3d9b'),
+            colorB: new THREE.Color('#b84dff'),
+          });
+        }
 
         const trimMaterial = new THREE.MeshStandardMaterial({
           color: '#c8c3b5',
@@ -617,6 +899,326 @@ const description =
           const colRight = colLeft.clone();
           colRight.position.x = 3.4;
           scene.add(colRight);
+        }
+
+        const addPlant = (x, z, scale = 1) => {
+          const plantGroup = new THREE.Group();
+          plantGroup.position.set(x, 0, z);
+
+          const pot = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.22 * scale, 0.28 * scale, 0.36 * scale, 12),
+            new THREE.MeshStandardMaterial({
+              color: '#3a2f28',
+              roughness: 0.75,
+              metalness: 0.08,
+            })
+          );
+          pot.position.y = 0.18 * scale;
+          plantGroup.add(pot);
+
+          const leafMaterial = new THREE.MeshStandardMaterial({
+            color: '#4f8f66',
+            emissive: '#163825',
+            emissiveIntensity: enableVibeLights ? 0.22 : 0.08,
+            roughness: 0.66,
+            metalness: 0.02,
+            side: THREE.DoubleSide,
+          });
+
+          for (let i = 0; i < 7; i += 1) {
+            const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.12 * scale, 0.7 * scale), leafMaterial);
+            leaf.position.y = 0.5 * scale + i * 0.03 * scale;
+            leaf.rotation.y = (i / 7) * Math.PI * 2;
+            leaf.rotation.z = -0.3 + (i % 3) * 0.12;
+            plantGroup.add(leaf);
+          }
+
+          scene.add(plantGroup);
+        };
+
+        const createScreenMaterial = (accentA, accentB, label) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1024;
+          canvas.height = 576;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return new THREE.MeshStandardMaterial({
+              color: '#0d1120',
+              emissive: accentA,
+              emissiveIntensity: 0.8,
+              roughness: 0.4,
+              metalness: 0.2,
+            });
+          }
+
+          const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+          gradient.addColorStop(0, '#090d16');
+          gradient.addColorStop(1, '#141a2a');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const glow = ctx.createRadialGradient(
+            canvas.width * 0.72,
+            canvas.height * 0.28,
+            50,
+            canvas.width * 0.72,
+            canvas.height * 0.28,
+            380
+          );
+          glow.addColorStop(0, accentA);
+          glow.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const glow2 = ctx.createRadialGradient(
+            canvas.width * 0.3,
+            canvas.height * 0.7,
+            30,
+            canvas.width * 0.3,
+            canvas.height * 0.7,
+            300
+          );
+          glow2.addColorStop(0, accentB);
+          glow2.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = glow2;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+          ctx.lineWidth = 6;
+          ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+          ctx.fillStyle = 'rgba(237,242,255,0.92)';
+          ctx.font = '600 52px "Trebuchet MS", sans-serif';
+          ctx.fillText(label, 56, canvas.height - 72);
+
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.needsUpdate = true;
+          return new THREE.MeshStandardMaterial({
+            color: '#ffffff',
+            map: texture,
+            emissive: '#4257ff',
+            emissiveIntensity: 0.42,
+            roughness: 0.38,
+            metalness: 0.14,
+          });
+        };
+
+        if (decorLevel > 0) {
+          const rug = new THREE.Mesh(
+            new THREE.PlaneGeometry(5.2, 8.4),
+            new THREE.MeshStandardMaterial({
+              color: '#2c374a',
+              roughness: 0.95,
+              metalness: 0.02,
+            })
+          );
+          rug.rotation.x = -Math.PI / 2;
+          rug.position.set(0, 0.01, corridorStart - 7.5);
+          scene.add(rug);
+
+          const benchMaterial = new THREE.MeshStandardMaterial({
+            color: '#cfc9bc',
+            roughness: 0.74,
+            metalness: 0.05,
+          });
+          const seatMaterial = new THREE.MeshStandardMaterial({
+            color: '#5a4f44',
+            roughness: 0.86,
+            metalness: 0.03,
+          });
+          const benchPositions = [corridorStart - 5.8, corridorStart - 17.4];
+          for (const z of benchPositions) {
+            for (const side of [-1, 1]) {
+              const bench = new THREE.Group();
+              bench.position.set(side * 5.8, 0, z);
+              bench.rotation.y = side === -1 ? Math.PI / 2 : -Math.PI / 2;
+
+              const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.28, 0.56), benchMaterial);
+              base.position.y = 0.24;
+              bench.add(base);
+
+              const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.62), seatMaterial);
+              seat.position.y = 0.42;
+              bench.add(seat);
+
+              scene.add(bench);
+            }
+          }
+
+          addPlant(-6.5, corridorStart - 1.7, 1.08);
+          addPlant(6.6, corridorStart - 12.6, 1.18);
+          if (decorLevel > 1) {
+            addPlant(-6.7, corridorEnd + 4.2, 1.2);
+          }
+
+          const accentPanelMaterial = new THREE.MeshStandardMaterial({
+            color: '#0d1020',
+            emissive: '#5b24f2',
+            emissiveIntensity: enableVibeLights ? 0.85 : 0.26,
+            roughness: 0.5,
+            metalness: 0.32,
+          });
+          const accentPanel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.1), accentPanelMaterial);
+          accentPanel.position.set(0, 4.2, corridorEnd + 0.05);
+          accentPanel.rotation.y = Math.PI;
+          scene.add(accentPanel);
+          vibeGlowMaterials.push({
+            material: accentPanelMaterial,
+            base: enableVibeLights ? 0.85 : 0.26,
+            phase: 2.1,
+            colorA: new THREE.Color('#4f24ff'),
+            colorB: new THREE.Color('#ff2f9d'),
+          });
+
+          if (decorLevel > 1) {
+            const sideDiscMaterial = new THREE.MeshStandardMaterial({
+              color: '#171c2b',
+              emissive: '#2ec8ff',
+              emissiveIntensity: 0.9,
+              roughness: 0.38,
+              metalness: 0.25,
+            });
+            const discLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.08, 24), sideDiscMaterial);
+            discLeft.rotation.x = Math.PI / 2;
+            discLeft.position.set(-wallHalf + 0.06, 4.15, corridorStart - 11.2);
+            discLeft.rotation.z = Math.PI / 2;
+            scene.add(discLeft);
+
+            const discRight = discLeft.clone();
+            discRight.position.x = wallHalf - 0.06;
+            discRight.material = sideDiscMaterial.clone();
+            discRight.material.emissive = new THREE.Color('#ff2f9d');
+            scene.add(discRight);
+
+            vibeGlowMaterials.push({
+              material: sideDiscMaterial,
+              base: 0.9,
+              phase: 2.8,
+              colorA: new THREE.Color('#2ec8ff'),
+              colorB: new THREE.Color('#6f57ff'),
+            });
+            vibeGlowMaterials.push({
+              material: discRight.material,
+              base: 0.92,
+              phase: 3.5,
+              colorA: new THREE.Color('#ff2f9d'),
+              colorB: new THREE.Color('#9e54ff'),
+            });
+          }
+
+          const lounge = new THREE.Group();
+          lounge.position.set(-1.1, 0, corridorStart - 4.4);
+
+          const sofaMat = new THREE.MeshStandardMaterial({
+            color: '#454a58',
+            roughness: 0.82,
+            metalness: 0.03,
+          });
+          const sofaSeat = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.54, 1.28), sofaMat);
+          sofaSeat.position.set(-1.2, 0.33, 0);
+          lounge.add(sofaSeat);
+          const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.82, 0.24), sofaMat);
+          sofaBack.position.set(-1.2, 0.74, -0.52);
+          lounge.add(sofaBack);
+          const sofaArm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.72, 1.22), sofaMat);
+          sofaArm.position.set(-2.74, 0.62, 0);
+          lounge.add(sofaArm);
+
+          const tableTop = new THREE.Mesh(
+            new THREE.BoxGeometry(1.95, 0.12, 1.12),
+            new THREE.MeshStandardMaterial({
+              color: '#ddd7cb',
+              roughness: 0.65,
+              metalness: 0.08,
+            })
+          );
+          tableTop.position.set(1, 0.46, -0.08);
+          lounge.add(tableTop);
+
+          const tableLeg = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.34, 0.18),
+            new THREE.MeshStandardMaterial({
+              color: '#8f8577',
+              roughness: 0.7,
+              metalness: 0.14,
+            })
+          );
+          for (const lx of [-0.8, 0.8]) {
+            for (const lz of [-0.44, 0.44]) {
+              const leg = tableLeg.clone();
+              leg.position.set(1 + lx, 0.23, -0.08 + lz);
+              lounge.add(leg);
+            }
+          }
+
+          const deskTop = new THREE.Mesh(
+            new THREE.BoxGeometry(2.25, 0.1, 0.82),
+            new THREE.MeshStandardMaterial({
+              color: '#d9cfbe',
+              roughness: 0.64,
+              metalness: 0.06,
+            })
+          );
+          deskTop.position.set(-2.8, 0.78, 2.55);
+          deskTop.rotation.y = Math.PI / 2.6;
+          lounge.add(deskTop);
+
+          const monitor = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.32, 0.76),
+            createScreenMaterial('#00b4ff', '#ff4aa7', 'vibe gallery')
+          );
+          monitor.position.set(-2.3, 1.45, 2.5);
+          monitor.rotation.y = Math.PI / 2.52;
+          lounge.add(monitor);
+
+          const tv = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.5, 1.35),
+            createScreenMaterial('#4e35ff', '#f83f9b', 'behangmotief')
+          );
+          tv.position.set(4.95, 1.66, 0.42);
+          tv.rotation.y = -Math.PI / 2;
+          lounge.add(tv);
+
+          const deskLight = new THREE.PointLight('#38caff', 0.56, 7.4);
+          deskLight.position.set(-2.4, 1.6, 2.4);
+          lounge.add(deskLight);
+          const tvLight = new THREE.PointLight('#ff4da5', 0.48, 7);
+          tvLight.position.set(4.25, 1.55, 0.45);
+          lounge.add(tvLight);
+          vibeLights.push({
+            light: deskLight,
+            base: 0.56,
+            phase: 4.2,
+            colorA: new THREE.Color('#30dfff'),
+            colorB: new THREE.Color('#5c4dff'),
+          });
+          vibeLights.push({
+            light: tvLight,
+            base: 0.48,
+            phase: 4.8,
+            colorA: new THREE.Color('#ff4da5'),
+            colorB: new THREE.Color('#a84dff'),
+          });
+
+          scene.add(lounge);
+
+          const neonBandMaterial = new THREE.MeshStandardMaterial({
+            color: '#141925',
+            emissive: '#23d7ff',
+            emissiveIntensity: decorLevel > 1 ? 1.1 : 0.78,
+            roughness: 0.36,
+            metalness: 0.22,
+          });
+          const neonBand = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.5, 0.08), neonBandMaterial);
+          neonBand.position.set(-wallHalf + 0.09, 3.1, corridorStart - 10.5);
+          scene.add(neonBand);
+          vibeGlowMaterials.push({
+            material: neonBandMaterial,
+            base: decorLevel > 1 ? 1.1 : 0.78,
+            phase: 5.2,
+            colorA: new THREE.Color('#23d7ff'),
+            colorB: new THREE.Color('#7454ff'),
+          });
         }
 
         const stripMaterial = new THREE.MeshStandardMaterial({
@@ -705,6 +1307,31 @@ const description =
           });
 
           sculptureGroup.add(pendant);
+        }
+
+        let dustParticles = null;
+        if (decorLevel > 0) {
+          const particleCount = profile.tier === 'high' ? 280 : 180;
+          const positions = new Float32Array(particleCount * 3);
+          for (let i = 0; i < particleCount; i += 1) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * (hallWidth - 1.6);
+            positions[i3 + 1] = 0.6 + Math.random() * (ceilingHeight - 1.2);
+            positions[i3 + 2] = corridorEnd + 2 + Math.random() * (corridorLength + 9);
+          }
+
+          const particleGeometry = new THREE.BufferGeometry();
+          particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          const particleMaterial = new THREE.PointsMaterial({
+            color: '#f6f0de',
+            size: profile.tier === 'high' ? 0.03 : 0.024,
+            transparent: true,
+            opacity: 0.42,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          });
+          dustParticles = new THREE.Points(particleGeometry, particleMaterial);
+          scene.add(dustParticles);
         }
 
         const textureLoader = new THREE.TextureLoader();
@@ -883,19 +1510,21 @@ const description =
           camera.updateProjectionMatrix();
           renderer.setPixelRatio(Math.min(window.devicePixelRatio, profile.pixelRatioCap));
           renderer.setSize(container.clientWidth, container.clientHeight);
+          if (composer) {
+            composer.setPixelRatio(Math.min(window.devicePixelRatio, profile.pixelRatioCap));
+            composer.setSize(container.clientWidth, container.clientHeight);
+          }
         };
 
         controls.addEventListener('lock', () => {
-          authPanel.classList.add('hidden');
-          artistsPanel.classList.add('hidden');
+          lobbyShell.classList.add('hidden');
           controlsHint.textContent = 'Press Esc to leave';
           controlsHint.classList.remove('hidden');
           enterButton.classList.add('hidden');
         });
 
         controls.addEventListener('unlock', () => {
-          authPanel.classList.remove('hidden');
-          artistsPanel.classList.remove('hidden');
+          lobbyShell.classList.remove('hidden');
           controlsHint.classList.add('hidden');
           enterButton.classList.remove('hidden');
         });
@@ -933,6 +1562,11 @@ const description =
           if (profile.enableSceneAnimation || profile.enableLightPulsing) {
             const sceneTime = time * 0.001;
 
+            if (dustParticles) {
+              dustParticles.rotation.y = sceneTime * 0.018;
+              dustParticles.position.y = Math.sin(sceneTime * 0.36) * 0.06;
+            }
+
             if (profile.enableSceneAnimation) {
               sculptureGroup.rotation.y += delta * 0.1;
               for (const pendant of pendants) {
@@ -958,6 +1592,20 @@ const description =
                   dynamicLight.light.intensity = dynamicLight.base * pulse;
                 }
               }
+
+              for (const vibeLight of vibeLights) {
+                const pulse = 0.76 + Math.sin(sceneTime * 1.15 + vibeLight.phase) * 0.28;
+                const colorMix = 0.5 + Math.sin(sceneTime * 0.72 + vibeLight.phase * 0.9) * 0.5;
+                vibeLight.light.color.copy(vibeLight.colorA).lerp(vibeLight.colorB, colorMix);
+                vibeLight.light.intensity = vibeLight.base * pulse;
+              }
+
+              for (const glow of vibeGlowMaterials) {
+                const pulse = 0.74 + Math.sin(sceneTime * 1.2 + glow.phase) * 0.22;
+                const colorMix = 0.5 + Math.sin(sceneTime * 0.7 + glow.phase) * 0.5;
+                glow.material.emissive.copy(glow.colorA).lerp(glow.colorB, colorMix);
+                glow.material.emissiveIntensity = glow.base * pulse;
+              }
             }
           } else {
             for (const pendant of pendants) {
@@ -966,10 +1614,28 @@ const description =
                 pendant.light.intensity = 0.22;
               }
             }
+
+            if (dustParticles) {
+              dustParticles.rotation.y += delta * 0.008;
+            }
+
+            for (const vibeLight of vibeLights) {
+              vibeLight.light.color.copy(vibeLight.colorA);
+              vibeLight.light.intensity = vibeLight.base * 0.82;
+            }
+
+            for (const glow of vibeGlowMaterials) {
+              glow.material.emissive.copy(glow.colorA);
+              glow.material.emissiveIntensity = glow.base * 0.84;
+            }
           }
 
           previousTime = time;
-          renderer.render(scene, camera);
+          if (composer) {
+            composer.render();
+          } else {
+            renderer.render(scene, camera);
+          }
         };
 
         window.addEventListener('resize', onResize);
@@ -997,6 +1663,9 @@ const description =
             }
           });
 
+          if (composer?.dispose) {
+            composer.dispose();
+          }
           renderer.dispose();
           container.innerHTML = '';
         };
@@ -1095,8 +1764,8 @@ const description =
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: radial-gradient(circle at 16% 14%, #f2f0eb 0%, #dddad2 60%, #d2cdc3 100%);
-    color: #222019;
+    background: radial-gradient(circle at 16% 14%, #1c2538 0%, #0d1017 65%, #08090d 100%);
+    color: #faf7ef;
     font-family: 'Trebuchet MS', 'Gill Sans', 'Segoe UI', sans-serif;
   }
 
@@ -1105,8 +1774,8 @@ const description =
     width: 100vw;
     height: 100vh;
     background:
-      radial-gradient(circle at 82% 80%, rgb(186 150 108 / 18%), transparent 44%),
-      radial-gradient(circle at 8% 16%, rgb(171 191 224 / 18%), transparent 36%);
+      radial-gradient(circle at 82% 80%, rgb(99 56 164 / 12%), transparent 44%),
+      radial-gradient(circle at 8% 16%, rgb(35 138 200 / 14%), transparent 36%);
   }
 
   #scene-root {
@@ -1114,64 +1783,133 @@ const description =
     height: 100%;
   }
 
-  .overlay-panel {
+  .lobby-shell {
     position: absolute;
-    left: 1.5rem;
-    top: 1.5rem;
-    width: min(25rem, calc(100vw - 3rem));
-    padding: 1rem 1.05rem 0.9rem;
-    border-radius: 0.95rem;
-    border: 1px solid rgb(32 30 24 / 13%);
-    background: linear-gradient(160deg, rgb(255 255 255 / 74%), rgb(246 243 235 / 66%));
-    backdrop-filter: blur(4px);
-    box-shadow: 0 14px 28px rgb(0 0 0 / 13%);
+    inset: 0;
     z-index: 30;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 1rem;
+    padding: 1.4rem 1.4rem 1.6rem;
+    pointer-events: none;
+    background:
+      linear-gradient(130deg, rgb(0 0 0 / 42%), rgb(0 0 0 / 24%) 45%, rgb(0 0 0 / 46%)),
+      radial-gradient(circle at 16% 12%, rgb(141 51 255 / 20%), transparent 42%),
+      radial-gradient(circle at 84% 88%, rgb(53 173 255 / 18%), transparent 48%);
+  }
+
+  .lobby-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    pointer-events: auto;
+  }
+
+  .lobby-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: #111;
+    background: rgb(255 255 255 / 94%);
+    border: 1px solid rgb(0 0 0 / 12%);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem 0.35rem 0.42rem;
+  }
+
+  .lobby-brand img {
+    width: 2.1rem;
+    height: auto;
+    display: block;
+  }
+
+  .lobby-brand span {
+    font-size: 0.79rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #262116;
+    white-space: nowrap;
+  }
+
+  .lobby-kicker {
+    margin: 0;
+    border: 1px solid rgb(255 255 255 / 24%);
+    border-radius: 999px;
+    background: rgb(11 15 24 / 58%);
+    color: rgb(247 232 204 / 92%);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.42rem 0.8rem;
+    white-space: nowrap;
+  }
+
+  .overlay-panel {
+    width: min(44rem, calc(100vw - 2.8rem));
+    align-self: center;
+    justify-self: center;
+    border-radius: 1.2rem;
+    border: 1px solid rgb(255 255 255 / 26%);
+    background:
+      linear-gradient(135deg, rgb(255 255 255 / 14%), rgb(255 255 255 / 7%)),
+      linear-gradient(165deg, rgb(8 12 20 / 86%), rgb(9 11 18 / 76%));
+    box-shadow: 0 26px 62px rgb(0 0 0 / 42%);
+    padding: 1.5rem 1.6rem 1.25rem;
+    pointer-events: auto;
     transition: opacity 300ms ease, transform 300ms ease;
   }
 
   .overlay-panel.ready {
-    opacity: 0.44;
-    transform: translateY(-0.2rem);
+    opacity: 0.92;
   }
 
   .kicker {
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: rgb(88 74 46 / 84%);
+    letter-spacing: 0.18em;
+    color: rgb(255 213 147 / 88%);
   }
 
   .overlay-panel h1 {
-    margin: 0.4rem 0 0.72rem;
-    font-size: clamp(1.2rem, 2.6vw, 1.65rem);
-    line-height: 1.2;
+    margin: 0.45rem 0 0.75rem;
+    font-size: clamp(1.55rem, 4vw, 2.35rem);
+    line-height: 1.1;
     font-family: Georgia, 'Times New Roman', serif;
-    color: #322c22;
+    color: #fff4dc;
   }
 
   #status-text {
     margin: 0;
     line-height: 1.42;
-    color: rgb(63 58 49 / 87%);
+    color: rgb(226 233 248 / 90%);
+    max-width: 40ch;
+  }
+
+  .lobby-actions {
+    margin-top: 1.1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
   }
 
   .cta-button {
-    margin-top: 1rem;
     border: 0;
     border-radius: 999px;
-    padding: 0.74rem 1.15rem;
-    font-size: 0.95rem;
+    padding: 0.72rem 1.15rem;
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
-    color: #1e1810;
-    background: linear-gradient(150deg, #f4dca1, #dcad73);
+    color: #111;
+    background: linear-gradient(145deg, #fff0b8, #f0ba74);
     transition: transform 180ms ease, box-shadow 180ms ease;
-    box-shadow: 0 8px 24px rgb(255 175 110 / 34%);
+    box-shadow: 0 8px 24px rgb(244 161 94 / 36%);
   }
 
   .cta-button:hover:enabled {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 
   .cta-button:disabled {
@@ -1180,65 +1918,66 @@ const description =
   }
 
   .meta-note {
-    margin: 0.85rem 0 0;
-    font-size: 0.8rem;
-    color: rgb(98 90 73 / 84%);
+    margin: 0.75rem 0 0;
+    font-size: 0.76rem;
+    color: rgb(176 189 216 / 76%);
   }
 
   .enter-button {
-    position: absolute;
-    left: 50%;
-    bottom: 2.2rem;
-    transform: translateX(-50%);
-    border: 1px solid rgb(49 40 29 / 36%);
+    border: 1px solid rgb(255 227 169 / 58%);
     border-radius: 999px;
-    padding: 0.9rem 1.3rem;
-    background: linear-gradient(120deg, rgb(249 244 234 / 94%), rgb(231 222 205 / 88%));
-    color: #2f261b;
-    font-size: 0.95rem;
+    padding: 0.68rem 1.1rem;
+    background: rgb(8 14 24 / 72%);
+    color: #ffe8c0;
+    font-size: 0.86rem;
     font-weight: 700;
     cursor: pointer;
-    z-index: 35;
+    letter-spacing: 0.03em;
+    transition: background 180ms ease, transform 180ms ease;
+  }
+
+  .enter-button:hover {
+    background: rgb(11 20 34 / 84%);
+    transform: translateY(-1px);
   }
 
   .artists-panel {
-    position: absolute;
-    right: 1.25rem;
-    top: 1.25rem;
-    width: min(16rem, calc(100vw - 2.5rem));
-    padding: 0.6rem 0.75rem;
+    justify-self: end;
+    align-self: end;
+    width: min(21rem, calc(100vw - 2.8rem));
+    padding: 0.78rem 0.86rem;
     border-radius: 0.9rem;
-    border: 1px solid rgb(38 35 27 / 16%);
-    background: linear-gradient(165deg, rgb(255 255 255 / 60%), rgb(244 241 233 / 56%));
-    z-index: 30;
-    max-height: min(78vh, 34rem);
+    border: 1px solid rgb(255 255 255 / 18%);
+    background: linear-gradient(165deg, rgb(8 12 20 / 78%), rgb(10 14 24 / 72%));
+    backdrop-filter: blur(3px);
+    max-height: min(44vh, 21rem);
     overflow: auto;
-    opacity: 0.78;
+    pointer-events: auto;
   }
 
   .panel-title {
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 0.69rem;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: rgb(95 79 50 / 88%);
+    letter-spacing: 0.13em;
+    color: rgb(255 208 140 / 86%);
   }
 
   #artists-list {
-    margin: 0.65rem 0 0;
+    margin: 0.56rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 0.4rem;
+    gap: 0.32rem;
   }
 
   #artists-list li {
-    border: 1px solid rgb(33 28 21 / 10%);
-    border-radius: 0.6rem;
-    padding: 0.36rem 0.48rem;
-    font-size: 0.83rem;
-    background: rgb(252 251 248 / 72%);
-    color: rgb(57 49 37 / 94%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 0.5rem;
+    padding: 0.33rem 0.47rem;
+    font-size: 0.8rem;
+    background: rgb(0 0 0 / 18%);
+    color: rgb(232 239 255 / 92%);
   }
 
   .controls-hint {
@@ -1248,11 +1987,13 @@ const description =
     transform: translateX(-50%);
     margin: 0;
     border-radius: 999px;
-    padding: 0.52rem 0.86rem;
-    background: rgb(250 246 236 / 78%);
-    color: #3b2f1f;
+    padding: 0.48rem 0.8rem;
+    border: 1px solid rgb(255 255 255 / 22%);
+    background: rgb(7 11 20 / 66%);
+    color: #fff2d6;
     font-size: 0.8rem;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     z-index: 35;
   }
 
@@ -1276,31 +2017,54 @@ const description =
   }
 
   @media (max-width: 860px) {
+    .lobby-shell {
+      padding: 0.85rem 0.85rem 1.1rem;
+      gap: 0.7rem;
+    }
+
+    .lobby-header {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .lobby-brand span {
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+    }
+
     .overlay-panel {
-      top: 0.85rem;
-      left: 0.85rem;
       width: calc(100vw - 1.7rem);
+      padding: 1.1rem 1rem 0.95rem;
+      border-radius: 1rem;
+    }
+
+    .overlay-panel h1 {
+      font-size: clamp(1.3rem, 7.2vw, 1.78rem);
+    }
+
+    .lobby-actions {
+      width: 100%;
+    }
+
+    .cta-button,
+    .enter-button {
+      width: 100%;
+      text-align: center;
     }
 
     .artists-panel {
-      top: auto;
-      bottom: 4.5rem;
-      left: 0.85rem;
-      right: 0.85rem;
-      width: auto;
-      max-height: 32vh;
+      width: calc(100vw - 1.7rem);
+      max-height: 30vh;
+      justify-self: center;
+      border-radius: 0.8rem;
     }
 
     .controls-hint {
       width: calc(100vw - 1.7rem);
       border-radius: 0.72rem;
       text-align: center;
-      bottom: 0.95rem;
       line-height: 1.35;
-    }
-
-    .enter-button {
-      bottom: 1rem;
     }
   }
 </style>
