@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, passthroughImageService } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
@@ -132,11 +132,11 @@ export default defineConfig({
   output: 'server',
   trailingSlash: isLocalDev ? 'ignore' : 'always',
   image: {
+    service: passthroughImageService(),
     domains: ['images.wannabes.be'],
   },
   adapter: vercel({
-    imageService: true,
-    devImageService: 'astro/assets/services/noop',
+    imageService: false,
     webAnalytics: {
       enabled: true,
     },
