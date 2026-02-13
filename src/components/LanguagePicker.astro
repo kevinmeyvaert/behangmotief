@@ -167,12 +167,26 @@ const withTrailingSlash = (value: string) => {
   }
 </div>
 
-<script>
+<script is:inline>
   // Add smooth transition on page load
   document.addEventListener('DOMContentLoaded', () => {
     const picker = document.querySelector('[data-language-picker]');
     if (picker) {
       picker.classList.add('loaded');
+
+      // Track language switch clicks
+      const languageLinks = picker.querySelectorAll('.language-option.inactive');
+      languageLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
+          const targetLang = link.querySelector('span')?.textContent?.toLowerCase();
+          const currentLang = document.documentElement.lang?.split('-')[0] || 'unknown';
+          window.posthog?.capture('language_switched', {
+            from_language: currentLang,
+            to_language: targetLang,
+            current_path: window.location.pathname
+          });
+        });
+      });
     }
   });
 </script>

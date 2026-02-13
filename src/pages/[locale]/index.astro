@@ -350,12 +350,17 @@ export const prerender = true;
   </div>
 </Layout>
 
-<script>
+<script is:inline>
   document
     .querySelector('[data-scroll-to="about"]')
     ?.addEventListener("click", (e) => {
       e.preventDefault();
       document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+
+      // Track hero CTA click
+      window.posthog?.capture('hero_cta_clicked', {
+        target_section: 'about'
+      });
     });
 </script>
 

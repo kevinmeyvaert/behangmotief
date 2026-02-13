@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { fetcher } from '@/lib/graphql-client';
+import { getPostHogServer } from '@/lib/posthog-server';
 
 const GALLERY_SEARCH_QUERY = `
   query GallerySearch($all: String, $limit: Int, $start: Int, $imageWidth: Int!, $imageHeight: Int!) {
@@ -276,6 +277,24 @@ export const POST: APIRoute = async ({ request }) => {
 
     const diversified = diversifyByShow(galleryItems);
 
+    // Track server-side event for gallery images loaded
+    const posthog = getPostHogServer();
+    const sessionId = request.headers.get('X-PostHog-Session-Id');
+    const distinctId = request.headers.get('X-PostHog-Distinct-Id') || 'anonymous';
+
+    posthog.capture({
+      distinctId,
+      event: 'gallery_images_loaded',
+      properties: {
+        $session_id: sessionId || undefined,
+        artist_count: artists.length,
+        image_count: diversified.length,
+        image_width: imageWidth,
+        image_height: imageHeight,
+        source: 'api',
+      },
+    });
+
     return new Response(
       JSON.stringify({
         images: diversified,
@@ -293,6 +312,25 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+
+    // Track error in PostHog
+    try {
+      const posthog = getPostHogServer();
+      const sessionId = request.headers.get('X-PostHog-Session-Id');
+      const distinctId = request.headers.get('X-PostHog-Distinct-Id') || 'anonymous';
+
+      posthog.capture({
+        distinctId,
+        event: '$exception',
+        properties: {
+          $session_id: sessionId || undefined,
+          $exception_message: message,
+          $exception_source: 'gallery-images-api',
+        },
+      });
+    } catch {
+      // Silently fail PostHog tracking on error
+    }
 
     return new Response(
       JSON.stringify({

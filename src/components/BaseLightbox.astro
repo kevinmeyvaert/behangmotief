@@ -363,7 +363,7 @@ const isGallery = images.length > 1;
     openLightbox(index) {
       this.currentIndex = index;
       const image = this.images[index];
-      
+
       this.overlay.classList.remove('hidden');
       if (this.spinner) {
         this.spinner.style.display = 'flex';
@@ -375,6 +375,13 @@ const isGallery = images.length > 1;
       this.img.alt = image.alt;
       this.setBlurhashBackground(image);
       this.updateUrl();
+
+      // Track lightbox opened event
+      window.posthog?.capture('lightbox_opened', {
+        image_id: image.id,
+        image_index: index,
+        total_images: this.images.length
+      });
     }
 
     closeLightbox() {
@@ -386,11 +393,29 @@ const isGallery = images.length > 1;
 
     showPrevImage() {
       const newIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+
+      // Track navigation event
+      window.posthog?.capture('lightbox_navigated', {
+        direction: 'previous',
+        from_index: this.currentIndex,
+        to_index: newIndex,
+        total_images: this.images.length
+      });
+
       this.openLightbox(newIndex);
     }
 
     showNextImage() {
       const newIndex = (this.currentIndex + 1) % this.images.length;
+
+      // Track navigation event
+      window.posthog?.capture('lightbox_navigated', {
+        direction: 'next',
+        from_index: this.currentIndex,
+        to_index: newIndex,
+        total_images: this.images.length
+      });
+
       this.openLightbox(newIndex);
     }
   }

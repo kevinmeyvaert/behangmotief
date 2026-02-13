@@ -120,13 +120,29 @@ const { images } = Astro.props;
 
       // Event listeners
       prevButton.addEventListener('click', () => {
+        const fromIndex = currentIndex;
         prevSlide();
         stopAutoplay();
+        // Track carousel navigation
+        (window as any).posthog?.capture('carousel_navigated', {
+          direction: 'previous',
+          from_index: fromIndex,
+          to_index: currentIndex,
+          total_slides: slides.length
+        });
       });
 
       nextButton.addEventListener('click', () => {
+        const fromIndex = currentIndex;
         nextSlide();
         stopAutoplay();
+        // Track carousel navigation
+        (window as any).posthog?.capture('carousel_navigated', {
+          direction: 'next',
+          from_index: fromIndex,
+          to_index: currentIndex,
+          total_slides: slides.length
+        });
       });
 
       element.addEventListener('mouseenter', stopAutoplay);

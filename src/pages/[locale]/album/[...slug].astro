@@ -141,6 +141,36 @@ const imageGallerySchema = getImageGallerySchema(
       <RelatedContentSection server:defer post={post} locale={lang} />
     </article>
   </main>
+  <script
+    is:inline
+    type="application/json"
+    data-album-meta
+    set:html={JSON.stringify({
+      artistName: post.artist.name,
+      venueName: post.venue.name,
+      imageCount: post.images.length,
+      date: post.date
+    })}
+  />
+  <script is:inline>
+    // Track album view event on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const metaEl = document.querySelector('[data-album-meta]');
+      if (metaEl) {
+        try {
+          const meta = JSON.parse(metaEl.textContent || '{}');
+          window.posthog?.capture('album_viewed', {
+            artist_name: meta.artistName,
+            venue_name: meta.venueName,
+            image_count: meta.imageCount,
+            album_date: meta.date
+          });
+        } catch (e) {
+          // Silently fail if JSON parsing fails
+        }
+      }
+    });
+  </script>
   <script>
     const backLink = document.querySelector('[data-back-link]');
 

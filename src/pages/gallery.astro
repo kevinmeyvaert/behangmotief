@@ -13,6 +13,13 @@ const description =
     <meta name="description" content={description} />
     <meta name="robots" content="noindex,follow" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_KEY, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST }}>
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init(apiKey || '', {
+        api_host: apiHost || 'https://eu.i.posthog.com',
+        defaults: '2025-11-30'
+      })
+    </script>
   </head>
   <body>
     <main id="gallery-app">
@@ -437,10 +444,16 @@ const description =
       }
 
       async function loadGalleryImages(artistNames, profile) {
+        // Get PostHog session and distinct ID for server-side correlation
+        const sessionId = window.posthog?.get_session_id?.() || null;
+        const distinctId = window.posthog?.get_distinct_id?.() || null;
+
         const payload = await fetchJsonWithErrors('/api/gallery-images', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
+            'X-PostHog-Session-Id': sessionId || '',
+            'X-PostHog-Distinct-Id': distinctId || '',
           },
           body: JSON.stringify({
             artists: artistNames,
@@ -1643,7 +1656,14 @@ const description =
         window.addEventListener('keyup', onKeyUp);
         animate();
 
-        enterButton.onclick = () => controls.lock();
+        enterButton.onclick = () => {
+          // Track gallery entered event
+          window.posthog?.capture('gallery_entered', {
+            performance_tier: profile.tier,
+            image_count: visibleImages.length
+          });
+          controls.lock();
+        };
 
         return () => {
           window.cancelAnimationFrame(rafId);
@@ -1674,6 +1694,8 @@ const description =
       async function bootstrap() {
         loginButton.addEventListener('click', () => {
           setStatus('Redirecting to Spotify login...');
+          // Track Spotify login started event
+          window.posthog?.capture('gallery_spotify_login_started');
           startSpotifyLogin().catch((error) => {
             showError(error instanceof Error ? error.message : 'Spotify login failed.');
           });

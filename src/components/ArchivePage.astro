@@ -79,3 +79,37 @@ const isPaginated = currentPage > 1;
     </div>
   </main>
 </Layout>
+
+<script
+  is:inline
+  type="application/json"
+  data-archive-meta
+  set:html={JSON.stringify({
+    currentPage,
+    totalPages,
+    searchTerm: searchParam,
+    albumCount: albums.length,
+    totalAlbums: pagination.total
+  })}
+/>
+<script is:inline>
+  // Track archive page view on load
+  document.addEventListener('DOMContentLoaded', () => {
+    const metaEl = document.querySelector('[data-archive-meta]');
+    if (metaEl) {
+      try {
+        const meta = JSON.parse(metaEl.textContent || '{}');
+        window.posthog?.capture('archive_page_viewed', {
+          current_page: meta.currentPage,
+          total_pages: meta.totalPages,
+          search_term: meta.searchTerm || null,
+          album_count: meta.albumCount,
+          total_albums: meta.totalAlbums,
+          has_search: Boolean(meta.searchTerm)
+        });
+      } catch (e) {
+        // Silently fail if JSON parsing fails
+      }
+    }
+  });
+</script>

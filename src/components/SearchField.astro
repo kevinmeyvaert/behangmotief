@@ -10,6 +10,7 @@ const t = useTranslations(lang);
   method="get"
   action={archiveRoute}
   class="w-full md:max-w-md mx-auto mb-8"
+  data-search-form
 >
   <div class="relative">
     <input
@@ -42,3 +43,21 @@ const t = useTranslations(lang);
     </button>
   </div>
 </form>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.querySelector('[data-search-form]');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        const input = searchForm.querySelector('input[name="search"]');
+        const searchTerm = input?.value?.trim() || '';
+        if (searchTerm) {
+          window.posthog?.capture('archive_searched', {
+            search_term: searchTerm,
+            search_length: searchTerm.length
+          });
+        }
+      });
+    }
+  });
+</script>
