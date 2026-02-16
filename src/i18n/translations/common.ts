@@ -20,6 +20,20 @@ export const common = {
     "recent.work": "Recent Work",
     "search.placeholder": "Search artist, venue, or festival...",
     "search.button.aria": "Search",
+    "favorites.count.aria": "Saved favorite photos",
+    "favorites.page.title": "Your Favorite Photos",
+    "favorites.page.description":
+      "A simple list of the photos you saved on this device.",
+    "favorites.link": "Favorites",
+    "favorites.empty.title": "No favorites yet",
+    "favorites.empty.description":
+      "Save photos from any album and they will appear here.",
+    "favorites.empty.cta": "Browse archive",
+    "favorites.open.album": "Open album",
+    "favorites.remove": "Remove",
+    "favorites.image.id": "Image ID",
+    "favorites.add.aria": "Add photo to favorites",
+    "favorites.remove.aria": "Remove photo from favorites",
   },
   nl: {
     "portfolio.title": "Uitgelicht werk",
@@ -42,5 +56,19 @@ export const common = {
     "recent.work": "Recent Werk",
     "search.placeholder": "Zoek artiest, locatie of festival...",
     "search.button.aria": "Zoeken",
+    "favorites.count.aria": "Opgeslagen favoriete foto's",
+    "favorites.page.title": "Jouw Favoriete Foto's",
+    "favorites.page.description":
+      "Een eenvoudig overzicht van de foto's die je op dit toestel hebt opgeslagen.",
+    "favorites.link": "Favorieten",
+    "favorites.empty.title": "Nog geen favorieten",
+    "favorites.empty.description":
+      "Sla foto's op vanuit een album en ze verschijnen hier.",
+    "favorites.empty.cta": "Doorzoek archief",
+    "favorites.open.album": "Open album",
+    "favorites.remove": "Verwijderen",
+    "favorites.image.id": "Foto ID",
+    "favorites.add.aria": "Foto toevoegen aan favorieten",
+    "favorites.remove.aria": "Foto verwijderen uit favorieten",
   },
 };
