@@ -133,8 +133,8 @@ const isPaginated = currentPage > 1;
 <script>
   import {
     FAVORITES_CHANGED_EVENT,
-    FAVORITES_STORAGE_KEY,
     getFavoritesCount,
+    ready,
   } from '@/lib/favorites';
 
   const countElements = Array.from(
@@ -148,11 +148,6 @@ const isPaginated = currentPage > 1;
     });
   };
 
-  updateFavoriteCounts();
+  ready.then(updateFavoriteCounts);
   window.addEventListener(FAVORITES_CHANGED_EVENT, updateFavoriteCounts);
-  window.addEventListener('storage', (event) => {
-    if (event.key === FAVORITES_STORAGE_KEY) {
-      updateFavoriteCounts();
-    }
-  });
 </script>

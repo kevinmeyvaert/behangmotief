@@ -228,26 +228,15 @@ const imageGallerySchema = getImageGallerySchema(
   <script>
     import {
       FAVORITES_CHANGED_EVENT,
-      FAVORITES_STORAGE_KEY,
       getFavoritesCount,
       isFavorite,
       toggleFavorite,
+      ready,
     } from '@/lib/favorites';
+    import type { FavoritePhotoInput } from '@/lib/favorites';
 
     type PostHogCapture = {
       capture?: (eventName: string, properties?: Record<string, unknown>) => void;
-    };
-    type FavoritePayload = {
-      imageId: string;
-      albumSlug: string;
-      artistName: string;
-      venueName: string;
-      date: string;
-      thumbUrl: string;
-      fullUrl: string;
-      blurhash?: string;
-      width?: number;
-      height?: number;
     };
 
     const posthog = (window as Window & { posthog?: PostHogCapture }).posthog;
@@ -292,7 +281,7 @@ const imageGallerySchema = getImageGallerySchema(
       });
     };
 
-    const readFavoritePayload = (button: HTMLButtonElement): FavoritePayload | null => {
+    const readFavoritePayload = (button: HTMLButtonElement): FavoritePhotoInput | null => {
       const tile = button.closest('[data-favorite-image-id]');
       if (!(tile instanceof HTMLElement)) return null;
 
@@ -324,40 +313,39 @@ const imageGallerySchema = getImageGallerySchema(
     };
 
     favoriteButtons.forEach((button) => {
-      button.addEventListener('click', (event) => {
+      button.addEventListener('click', async (event) => {
         event.preventDefault();
         event.stopPropagation();
 
         const payload = readFavoritePayload(button);
         if (!payload) return;
 
-        const favorites = toggleFavorite(payload);
-        const nowFavorite = favorites.some(
-          (favorite) => favorite.imageId === payload.imageId
-        );
-        setButtonState(button, nowFavorite);
+        await ready;
 
-        posthog?.capture?.(nowFavorite ? 'favorite_added' : 'favorite_removed', {
-          image_id: payload.imageId,
-          album_slug: payload.albumSlug,
-          total_favorites: favorites.length,
-        });
+        const wasFavorite = isFavorite(payload.imageId);
+        await toggleFavorite(payload);
+        const nowFavorite = isFavorite(payload.imageId);
+
+        if (wasFavorite !== nowFavorite) {
+          setButtonState(button, nowFavorite);
+          posthog?.capture?.(nowFavorite ? 'favorite_added' : 'favorite_removed', {
+            image_id: payload.imageId,
+            album_slug: payload.albumSlug,
+            total_favorites: getFavoritesCount(),
+          });
+        }
       });
     });
 
-    syncFavoriteButtonStates();
-    updateFavoriteCounts();
-
-    window.addEventListener(FAVORITES_CHANGED_EVENT, () => {
+    // Sync state once favorites are loaded
+    ready.then(() => {
       syncFavoriteButtonStates();
       updateFavoriteCounts();
     });
 
-    window.addEventListener('storage', (event) => {
-      if (event.key === FAVORITES_STORAGE_KEY) {
-        syncFavoriteButtonStates();
-        updateFavoriteCounts();
-      }
+    window.addEventListener(FAVORITES_CHANGED_EVENT, () => {
+      syncFavoriteButtonStates();
+      updateFavoriteCounts();
     });
   </script>
   <script>

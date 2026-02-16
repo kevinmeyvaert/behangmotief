@@ -1,0 +1,57 @@
+---
+// OAuth callback page — no layout, minimal HTML
+// Supabase PKCE flow: exchanges the `code` param for a session
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Signing in…</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #fafafa;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e5e5;
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <script type="module">
+      import { createClient } from '@supabase/supabase-js';
+
+      const supabase = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      );
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code);
+      }
+
+      const returnUrl =
+        sessionStorage.getItem('behangmotief:auth-redirect') || '/';
+      sessionStorage.removeItem('behangmotief:auth-redirect');
+      window.location.replace(returnUrl);
+    </script>
+  </body>
+</html>
