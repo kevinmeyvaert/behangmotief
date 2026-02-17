@@ -1,10 +1,12 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import { useTranslatedPath, useTranslations } from '@/i18n/utils';
+import { routes } from '@/i18n/ui';
 import { albumsService } from '@/services/albums.service';
 import PostGrid from '@/components/PostGrid.astro';
 import Pagination from '@/components/Pagination.astro';
 import Header from '@/components/Header.astro';
+
 import SearchField from '@/components/SearchField.astro';
 import StructuredData from '@/components/StructuredData.astro';
 import { getCollectionPageSchema } from '@/lib/site-metadata';
@@ -39,7 +41,7 @@ const { albums, pagination } = await albumsService.searchAlbums({
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
 const archiveRoute = `${translatePath('/archive')}/`;
-const favoritesRoute = `${archiveRoute}favorites/`;
+const favoritesRoute = `${archiveRoute}${routes[locale].favorites}/`;
 const collectionPageSchema = getCollectionPageSchema(locale);
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://behangmotief.be';
 const canonicalArchiveUrl = `${siteUrl}${archiveRoute}`;
