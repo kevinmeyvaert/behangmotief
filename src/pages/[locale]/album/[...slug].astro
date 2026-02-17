@@ -1,11 +1,13 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslatedPath, useTranslations } from '../../../i18n/utils';
+import { routes } from '@/i18n/ui';
 import { albumsService } from '@/services/albums.service';
 import AlbumLightbox from '@/components/AlbumLightbox.astro';
 import BlurHashImage from '@/components/BlurHashImage.astro';
 import RelatedContentSection from '@/components/RelatedContentSection.astro';
 import Header from '@/components/Header.astro';
+
 import StructuredData from '@/components/StructuredData.astro';
 import { formatPostDate } from '@/lib/date';
 import { ImageUrlBuilder } from '@/lib/image-url-builder';
@@ -16,7 +18,7 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 const archivePath = `${translatePath('/archive')}/`;
-const favoritesPath = `${archivePath}favorites/`;
+const favoritesPath = `${archivePath}${routes[lang].favorites}/`;
 const addFavoriteAriaLabel = t('favorites.add.aria');
 const removeFavoriteAriaLabel = t('favorites.remove.aria');
 
@@ -101,20 +103,22 @@ const imageGallerySchema = getImageGallerySchema(
             <span aria-hidden="true">←</span>
             {t('album.back')}
           </a>
-          <a
-            href={favoritesPath}
-            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
-          >
-            <span>{t('favorites.link')}</span>
-            <span
-              class="inline-flex min-w-6 justify-center rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold"
-              data-favorites-context-count
-              aria-live="polite"
-              aria-label={t('favorites.count.aria')}
+          <div class="flex items-center gap-3">
+            <a
+              href={favoritesPath}
+              class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
             >
-              0
-            </span>
-          </a>
+              <span>{t('favorites.link')}</span>
+              <span
+                class="inline-flex min-w-6 justify-center rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold"
+                data-favorites-context-count
+                aria-live="polite"
+                aria-label={t('favorites.count.aria')}
+              >
+                0
+              </span>
+            </a>
+          </div>
         </div>
         <header class="text-center mb-12">
           <h1 class="text-4xl font-bold">{post.artist.name}</h1>
@@ -150,7 +154,7 @@ const imageGallerySchema = getImageGallerySchema(
               >
                 <button
                   type="button"
-                  class="absolute right-2 top-2 z-10 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/20 text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-md opacity-100 transition-all duration-200 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-white/35 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  class="absolute right-2 top-2 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                   data-favorite-toggle
                   data-favorite-add-label={addFavoriteAriaLabel}
                   data-favorite-remove-label={removeFavoriteAriaLabel}
@@ -160,7 +164,7 @@ const imageGallerySchema = getImageGallerySchema(
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
-                    class="h-5 w-5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+                    class="h-4 w-4"
                     stroke="currentColor"
                     stroke-width="2"
                     fill="none"
@@ -257,9 +261,10 @@ const imageGallerySchema = getImageGallerySchema(
       button.setAttribute('aria-label', active ? removeLabel : addLabel);
       button.classList.toggle('bg-rose-600', active);
       button.classList.toggle('border-rose-500', active);
-      button.classList.toggle('text-white', active);
-      button.classList.toggle('bg-white/20', !active);
+      button.classList.toggle('bg-black/50', !active);
       button.classList.toggle('border-white/30', !active);
+      // Keep favorited hearts always visible
+      button.classList.toggle('opacity-100', active);
       if (icon instanceof SVGElement) {
         icon.setAttribute('fill', active ? 'currentColor' : 'none');
       }
