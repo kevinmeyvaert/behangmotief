@@ -41,6 +41,12 @@ export const common = {
     "auth.login.google": "Continue with Google",
     "auth.login.close": "Close",
     "auth.signout": "Sign out",
+    "account.delete.link": "Remove your account",
+    "account.delete.title": "Delete account",
+    "account.delete.description":
+      "This will permanently delete your account and all your saved favorites. This action cannot be undone.",
+    "account.delete.confirm": "Delete my account",
+    "account.delete.cancel": "Cancel",
   },
   nl: {
     "portfolio.title": "Uitgelicht werk",
@@ -84,5 +90,11 @@ export const common = {
     "auth.login.google": "Doorgaan met Google",
     "auth.login.close": "Sluiten",
     "auth.signout": "Afmelden",
+    "account.delete.link": "Account verwijderen",
+    "account.delete.title": "Account verwijderen",
+    "account.delete.description":
+      "Dit verwijdert je account en al je opgeslagen favorieten permanent. Deze actie kan niet ongedaan worden gemaakt.",
+    "account.delete.confirm": "Verwijder mijn account",
+    "account.delete.cancel": "Annuleren",
   },
 };

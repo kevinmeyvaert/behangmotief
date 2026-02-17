@@ -1,0 +1,82 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import { useTranslations } from '@/i18n/utils';
+
+export const prerender = true;
+
+const locale = 'nl';
+const t = useTranslations(locale);
+---
+
+<Layout
+  title={t('legal.terms.title')}
+  description={t('legal.terms.description')}
+  locale={locale}
+>
+  <Header />
+  <main class="container mx-auto px-4 md:px-0 pt-0">
+    <article class="legal-content max-w-2xl">
+      <h1 class="text-3xl font-bold mb-2 border-b-2 border-black inline-block">
+        {t('legal.terms.heading')}
+      </h1>
+      <p class="text-sm text-gray-400 mt-3 mb-8">{t('legal.terms.lastUpdated')}</p>
+      <Fragment set:html={t('legal.terms.body')} />
+    </article>
+  </main>
+</Layout>
+
+<style>
+  main {
+    padding-bottom: 4rem;
+  }
+
+  .legal-content :global(h2) {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: black;
+  }
+
+  .legal-content :global(h3) {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.25rem;
+    color: black;
+  }
+
+  .legal-content :global(p) {
+    color: oklch(0.4 0 0);
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal-content :global(ul) {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .legal-content :global(li) {
+    color: oklch(0.4 0 0);
+    line-height: 1.75;
+    margin-bottom: 0.25rem;
+  }
+
+  .legal-content :global(a) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity 0.15s;
+  }
+
+  .legal-content :global(a:hover) {
+    opacity: 0.6;
+  }
+
+  .legal-content :global(strong) {
+    font-weight: 600;
+    color: black;
+  }
+</style>
