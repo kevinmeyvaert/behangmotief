@@ -1,6 +1,5 @@
 ---
 import Header from '@/components/Header.astro';
-
 import Layout from '@/layouts/Layout.astro';
 import { useTranslatedPath, useTranslations } from '@/i18n/utils';
 
@@ -249,10 +248,10 @@ const callbackPath = `/${locale}/auth/callback`;
       };
 
       const formatFavoriteDate = (rawDate: string) => {
-        const raw = String(rawDate || '').trim();
-        if (!raw) return '';
-        const parsed = new Date(raw);
-        if (Number.isNaN(parsed.getTime())) return raw;
+        const trimmed = rawDate.trim();
+        if (!trimmed) return '';
+        const parsed = new Date(trimmed);
+        if (Number.isNaN(parsed.getTime())) return trimmed;
         return formatPostDate(parsed.toISOString());
       };
 
@@ -265,6 +264,7 @@ const callbackPath = `/${locale}/auth/callback`;
 
       const openLightbox = (index: number) => {
         if (!lbOverlay || !lbImage || lightboxImages.length === 0) return;
+        if (index < 0 || index >= lightboxImages.length) return;
         lightboxIndex = index;
         const entry = lightboxImages[lightboxIndex];
         lbImage.classList.add('opacity-0');
@@ -368,7 +368,7 @@ const callbackPath = `/${locale}/auth/callback`;
 
           const overlay = document.createElement('div');
           overlay.className =
-            'absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-100';
+            'absolute inset-0 bg-gradient-to-t from-black/30 to-transparent';
 
           const meta = document.createElement('div');
           meta.className =
@@ -412,10 +412,8 @@ const callbackPath = `/${locale}/auth/callback`;
 
       // Sign in directly with Google
       loginButton?.addEventListener('click', async () => {
-        const callbackPath =
-          loginButton instanceof HTMLElement
-            ? loginButton.dataset.callbackPath || `/${config.locale || 'nl'}/auth/callback`
-            : `/${config.locale || 'nl'}/auth/callback`;
+        const fallbackCallback = `/${config.locale || 'nl'}/auth/callback`;
+        const callbackPath = (loginButton as HTMLElement).dataset.callbackPath || fallbackCallback;
         sessionStorage.setItem('behangmotief:auth-redirect', window.location.href);
         await supabase.auth.signInWithOAuth({
           provider: 'google',

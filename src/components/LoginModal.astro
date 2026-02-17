@@ -75,10 +75,7 @@ const callbackPath = `/${lang}/auth/callback`;
   googleBtn?.addEventListener('click', async () => {
     // Store current URL so callback can redirect back
     sessionStorage.setItem(REDIRECT_KEY, window.location.href);
-    const callbackPath =
-      googleBtn instanceof HTMLElement
-        ? googleBtn.dataset.callbackPath || '/nl/auth/callback'
-        : '/nl/auth/callback';
+    const callbackPath = (googleBtn as HTMLElement).dataset.callbackPath || '/nl/auth/callback';
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
