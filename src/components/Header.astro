@@ -43,41 +43,7 @@ const homePath = `/${lang}/`;
           </p>
         </div>
       </a>
-      <div class="flex items-center gap-4">
-        <Navigation theme={theme} />
-        <div data-user-menu class="flex items-center"></div>
-      </div>
+      <Navigation theme={theme} />
     </div>
   </div>
 </header>
-
-<script>
-  import { supabase } from '@/lib/supabase';
-
-  const userMenu = document.querySelector('[data-user-menu]');
-  if (userMenu instanceof HTMLElement) {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-
-      const avatar = document.createElement('img');
-      avatar.src = user.user_metadata?.avatar_url || '';
-      avatar.alt = user.user_metadata?.full_name || '';
-      avatar.className = 'h-8 w-8 rounded-full object-cover';
-      avatar.referrerPolicy = 'no-referrer';
-
-      const signOutBtn = document.createElement('button');
-      signOutBtn.type = 'button';
-      signOutBtn.className =
-        'text-xs cursor-pointer text-gray-500 hover:text-black transition-colors';
-      signOutBtn.textContent = userMenu.closest('[lang]')?.getAttribute('lang')?.startsWith('nl')
-        ? 'Afmelden'
-        : 'Sign out';
-      signOutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      });
-
-      userMenu.append(avatar, signOutBtn);
-    });
-  }
-</script>
