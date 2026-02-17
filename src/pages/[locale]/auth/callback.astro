@@ -1,0 +1,68 @@
+---
+// OAuth callback page — no layout, minimal HTML
+// Handles both PKCE `?code` and implicit `#access_token` return formats.
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Signing in…</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #fafafa;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e5e5;
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <script>
+      import { supabase } from '@/lib/supabase';
+
+      const REDIRECT_KEY = 'behangmotief:auth-redirect';
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+
+      try {
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        } else if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+        }
+      } catch (error) {
+        console.error('OAuth callback failed:', error);
+      }
+
+      const returnUrl = sessionStorage.getItem(REDIRECT_KEY) || '/';
+      sessionStorage.removeItem(REDIRECT_KEY);
+      window.location.replace(returnUrl);
+    </script>
+  </body>
+</html>

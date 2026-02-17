@@ -3,6 +3,7 @@ import { getLangFromUrl, useTranslations } from '@/i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const callbackPath = `/${lang}/auth/callback`;
 ---
 
 <dialog
@@ -16,6 +17,7 @@ const t = useTranslations(lang);
     <button
       type="button"
       data-login-google
+      data-callback-path={callbackPath}
       class="mt-6 flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
     >
       <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
@@ -73,11 +75,15 @@ const t = useTranslations(lang);
   googleBtn?.addEventListener('click', async () => {
     // Store current URL so callback can redirect back
     sessionStorage.setItem(REDIRECT_KEY, window.location.href);
+    const callbackPath =
+      googleBtn instanceof HTMLElement
+        ? googleBtn.dataset.callbackPath || '/nl/auth/callback'
+        : '/nl/auth/callback';
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}${callbackPath}`,
       },
     });
   });
