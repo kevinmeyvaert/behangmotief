@@ -21,9 +21,10 @@ export const common = {
     "search.placeholder": "Search artist, venue, or festival...",
     "search.button.aria": "Search",
     "favorites.count.aria": "Saved favorite photos",
-    "favorites.page.title": "Your Favorite Photos",
+    "favorites.page.title": "Your favorite photos",
     "favorites.page.description":
-      "A simple list of the photos you saved on this device.",
+      "All photos you've saved across your albums.",
+    "favorites.page.signout": "Sign out",
     "favorites.link": "Favorites",
     "favorites.empty.title": "No favorites yet",
     "favorites.empty.description":
@@ -63,9 +64,10 @@ export const common = {
     "search.placeholder": "Zoek artiest, locatie of festival...",
     "search.button.aria": "Zoeken",
     "favorites.count.aria": "Opgeslagen favoriete foto's",
-    "favorites.page.title": "Jouw Favoriete Foto's",
+    "favorites.page.title": "Jouw favoriete foto's",
     "favorites.page.description":
-      "Een eenvoudig overzicht van de foto's die je op dit toestel hebt opgeslagen.",
+      "Alle foto's die je hebt opgeslagen doorheen je albums.",
+    "favorites.page.signout": "Afmelden",
     "favorites.link": "Favorieten",
     "favorites.empty.title": "Nog geen favorieten",
     "favorites.empty.description":
