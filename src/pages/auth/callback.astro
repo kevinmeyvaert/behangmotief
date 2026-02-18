@@ -35,7 +35,7 @@
     <div class="spinner"></div>
     <script>
       const REDIRECT_KEY = 'behangmotief:auth-redirect';
-      const returnUrl = sessionStorage.getItem(REDIRECT_KEY) || '/nl/';
+      const returnUrl = localStorage.getItem(REDIRECT_KEY) || '/nl/';
 
       let locale = 'nl';
       try {

@@ -60,8 +60,8 @@
         console.error('OAuth callback failed:', error);
       }
 
-      const returnUrl = sessionStorage.getItem(REDIRECT_KEY) || '/';
-      sessionStorage.removeItem(REDIRECT_KEY);
+      const returnUrl = localStorage.getItem(REDIRECT_KEY) || '/';
+      localStorage.removeItem(REDIRECT_KEY);
       window.location.replace(returnUrl);
     </script>
   </body>
