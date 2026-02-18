@@ -55,7 +55,6 @@ const callbackPath = `/${lang}/auth/callback`;
   import { supabase } from '@/lib/supabase';
 
   const PENDING_KEY = 'behangmotief:pending-favorite';
-  const REDIRECT_KEY = 'behangmotief:auth-redirect';
 
   const dialog = document.querySelector<HTMLDialogElement>('[data-login-modal]');
   const googleBtn = document.querySelector('[data-login-google]');
@@ -73,14 +72,13 @@ const callbackPath = `/${lang}/auth/callback`;
   };
 
   googleBtn?.addEventListener('click', async () => {
-    // Store current URL so callback can redirect back
-    localStorage.setItem(REDIRECT_KEY, window.location.href);
     const callbackPath = (googleBtn as HTMLElement).dataset.callbackPath || '/nl/auth/callback';
+    const next = window.location.pathname + window.location.search;
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}${callbackPath}`,
+        redirectTo: `${window.location.origin}${callbackPath}?next=${encodeURIComponent(next)}`,
       },
     });
   });

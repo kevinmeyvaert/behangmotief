@@ -475,11 +475,11 @@ const callbackPath = `/${locale}/auth/callback`;
       loginButton?.addEventListener('click', async () => {
         const fallbackCallback = `/${config.locale || 'nl'}/auth/callback`;
         const callbackPath = (loginButton as HTMLElement).dataset.callbackPath || fallbackCallback;
-        localStorage.setItem('behangmotief:auth-redirect', window.location.href);
+        const next = window.location.pathname + window.location.search;
         await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}${callbackPath}`,
+            redirectTo: `${window.location.origin}${callbackPath}?next=${encodeURIComponent(next)}`,
           },
         });
       });

@@ -60,7 +60,10 @@
         console.error('OAuth callback failed:', error);
       }
 
-      const returnUrl = localStorage.getItem(REDIRECT_KEY) || '/';
+      // Prefer `next` query param (travels through the OAuth redirect chain),
+      // fall back to localStorage for backwards compat.
+      const next = params.get('next');
+      const returnUrl = next || localStorage.getItem(REDIRECT_KEY) || '/';
       localStorage.removeItem(REDIRECT_KEY);
       window.location.replace(returnUrl);
     </script>
