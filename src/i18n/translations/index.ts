@@ -4,6 +4,7 @@ import { services } from './services';
 import { album } from './album';
 import { archive } from './archive';
 import { common } from './common';
+import { legal } from './legal';
 
 export const ui = {
   en: {
@@ -13,6 +14,7 @@ export const ui = {
     ...album.en,
     ...archive.en,
     ...common.en,
+    ...legal.en,
   },
   nl: {
     ...navigation.nl,
@@ -21,5 +23,6 @@ export const ui = {
     ...album.nl,
     ...archive.nl,
     ...common.nl,
+    ...legal.nl,
   },
 };

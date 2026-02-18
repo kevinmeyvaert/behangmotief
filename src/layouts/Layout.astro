@@ -1,5 +1,6 @@
 ---
 import Footer from '@/components/Footer.astro';
+import LoginModal from '@/components/LoginModal.astro';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import StructuredData from '@/components/StructuredData.astro';
@@ -132,8 +133,13 @@ const baseStructuredData = [
   <body>
     <slot />
     <Footer />
+    <LoginModal />
     <Analytics />
     <SpeedInsights />
+    <script>
+      import { initFavorites } from '@/lib/favorites';
+      initFavorites();
+    </script>
   </body>
 </html>
 

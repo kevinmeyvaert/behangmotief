@@ -1,7 +1,7 @@
 ---
 // Images
 import { Image } from 'astro:assets';
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import { getLangFromUrl, useTranslatedPath, useTranslations } from '../i18n/utils';
 
 const referrals = [
   'Democrazy',
@@ -19,6 +19,7 @@ const referrals = [
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
 ---
 
 <footer class="w-full bg-black flex justify-center">
@@ -87,6 +88,11 @@ const t = useTranslations(lang);
       —
       <p>
         BTW BE 0548.755.031
+      </p>
+      <p class="mt-3 text-xs text-white/50">
+        <a href={`${translatePath('/privacy')}/`} class="hover:text-white/80 transition-colors">{t('legal.privacy.heading')}</a>
+        &middot;
+        <a href={`${translatePath('/terms')}/`} class="hover:text-white/80 transition-colors">{t('legal.terms.heading')}</a>
       </p>
     </section>
   </div>

@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import { useTranslatedPath, useTranslations } from '@/i18n/utils';
+import { routes } from '@/i18n/ui';
 import { albumsService } from '@/services/albums.service';
 import PostGrid from '@/components/PostGrid.astro';
 import Pagination from '@/components/Pagination.astro';
@@ -39,6 +40,7 @@ const { albums, pagination } = await albumsService.searchAlbums({
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
 const archiveRoute = `${translatePath('/archive')}/`;
+const favoritesRoute = `${archiveRoute}${routes[locale].favorites}/`;
 const collectionPageSchema = getCollectionPageSchema(locale);
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://behangmotief.be';
 const canonicalArchiveUrl = `${siteUrl}${archiveRoute}`;
@@ -56,7 +58,23 @@ const isPaginated = currentPage > 1;
   <StructuredData slot="structured-data" schema={collectionPageSchema} />
 
   <Header />
-  <main class="container mx-auto px-4 md:px-0 py-8">
+  <main class="container mx-auto px-4 md:px-0 pt-0 pb-8">
+    <div class="mb-8 flex items-center justify-end gap-3">
+      <a
+        href={favoritesRoute}
+        class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
+      >
+        <span>{t('favorites.link')}</span>
+        <span
+          class="inline-flex min-w-6 justify-center rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold"
+          data-favorites-context-count
+          aria-live="polite"
+          aria-label={t('favorites.count.aria')}
+        >
+          0
+        </span>
+      </a>
+    </div>
     <SearchField currentSearch={searchParam} archiveRoute={archiveRoute} />
 
     {searchParam && albums.length === 0 ? (
@@ -112,4 +130,25 @@ const isPaginated = currentPage > 1;
       }
     }
   });
+</script>
+<script>
+  import {
+    FAVORITES_CHANGED_EVENT,
+    getFavoritesCount,
+    ready,
+  } from '@/lib/favorites';
+
+  const countElements = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-favorites-context-count]')
+  );
+
+  const updateFavoriteCounts = () => {
+    const count = getFavoritesCount();
+    countElements.forEach((element) => {
+      element.textContent = String(count);
+    });
+  };
+
+  ready.then(updateFavoriteCounts);
+  window.addEventListener(FAVORITES_CHANGED_EVENT, updateFavoriteCounts);
 </script>

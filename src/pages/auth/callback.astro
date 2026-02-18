@@ -1,0 +1,55 @@
+---
+// Legacy non-localized callback route.
+// Redirect quickly to the locale-aware callback route so auth works with i18n routing.
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Redirecting…</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #fafafa;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e5e5;
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner"></div>
+    <script>
+      const REDIRECT_KEY = 'behangmotief:auth-redirect';
+      const returnUrl = sessionStorage.getItem(REDIRECT_KEY) || '/nl/';
+
+      let locale = 'nl';
+      try {
+        const pathLocale = new URL(returnUrl, window.location.origin).pathname
+          .split('/')
+          .filter(Boolean)[0];
+        if (pathLocale === 'en' || pathLocale === 'nl') {
+          locale = pathLocale;
+        }
+      } catch {
+        // Keep default locale.
+      }
+
+      window.location.replace(`/${locale}/auth/callback${window.location.search}${window.location.hash}`);
+    </script>
+  </body>
+</html>

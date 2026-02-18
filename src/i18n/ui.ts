@@ -10,11 +10,17 @@ export const routes = {
     archive: "archief",
     album: "album",
     grid: "het-motief",
+    favorites: "favorieten",
+    privacy: "privacybeleid",
+    terms: "gebruiksvoorwaarden",
   },
   en: {
     archive: "archive",
     album: "album",
     grid: "grid",
+    favorites: "favorites",
+    privacy: "privacy-policy",
+    terms: "terms-of-service",
   },
 };
 

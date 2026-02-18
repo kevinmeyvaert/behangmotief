@@ -1,0 +1,501 @@
+---
+import Header from '@/components/Header.astro';
+import Layout from '@/layouts/Layout.astro';
+import { useTranslatedPath, useTranslations } from '@/i18n/utils';
+
+interface Props {
+  locale: 'en' | 'nl';
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+const archivePath = `${translatePath('/archive')}/`;
+const callbackPath = `/${locale}/auth/callback`;
+---
+
+<Layout
+  title={t('favorites.page.title')}
+  description={t('favorites.page.description')}
+  locale={locale}
+>
+  <Header />
+  <main>
+    <section class="container mx-auto mb-12 px-4 md:px-0 pb-10 md:pb-14">
+      <div class="mb-8 flex min-h-10 items-center justify-between gap-3">
+        <a
+          href={archivePath}
+          class="inline-flex items-center gap-2 text-gray-500 hover:text-black transition-colors"
+        >
+          <span aria-hidden="true">←</span>
+          {t('favorites.empty.cta')}
+        </a>
+      </div>
+
+      <header>
+        <h1 class="text-3xl md:text-4xl font-bold">{t('favorites.page.title')}</h1>
+        <p class="mt-3 text-muted-foreground max-w-2xl">
+          {t('favorites.page.description')}
+          <button
+            type="button"
+            data-favorites-signout
+            class="hidden ml-1 underline hover:text-black transition-colors cursor-pointer"
+          >
+            {t('favorites.page.signout')}
+          </button>
+          <button
+            type="button"
+            data-account-delete
+            class="hidden ml-1 underline hover:text-black transition-colors cursor-pointer"
+          >
+            {t('account.delete.link')}
+          </button>
+        </p>
+      </header>
+
+      <section class="mt-10">
+        <div
+          data-favorites-auth-required
+          class="hidden py-16 text-center"
+        >
+          <h2 class="text-2xl font-semibold">{t('auth.login.title')}</h2>
+          <p class="mt-3 text-muted-foreground">{t('favorites.auth.required')}</p>
+          <button
+            type="button"
+            data-favorites-login
+            data-callback-path={callbackPath}
+            class="mt-6 inline-flex cursor-pointer items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            </svg>
+            {t('auth.login.google')}
+          </button>
+        </div>
+
+        <div
+          data-favorites-empty
+          class="hidden py-16 text-center"
+        >
+          <h2 class="text-2xl font-semibold">{t('favorites.empty.title')}</h2>
+          <p class="mt-3 text-muted-foreground">{t('favorites.empty.description')}</p>
+          <a
+            href={archivePath}
+            class="mt-6 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-primary-foreground hover:opacity-80 transition-opacity"
+          >
+            {t('favorites.empty.cta')}
+          </a>
+        </div>
+
+        <div
+          data-favorites-grid
+          class="favorites-masonry"
+        ></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Favorites lightbox -->
+  <div
+    class="lightbox-overlay hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+    data-favorites-lightbox
+  >
+    <button
+      class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
+      data-favorites-lightbox-close
+      aria-label="Close lightbox"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <button
+      class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
+      data-favorites-lightbox-prev
+      aria-label="Previous image"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+      </svg>
+    </button>
+    <button
+      class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
+      data-favorites-lightbox-next
+      aria-label="Next image"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
+    <div class="relative flex items-center justify-center w-full h-full p-4">
+      <div class="relative w-auto h-auto">
+        <div class="absolute inset-0 flex items-center justify-center z-10" data-favorites-lightbox-spinner>
+          <div class="animate-spin rounded-full h-10 w-10 border-2 border-white/20 border-t-white"></div>
+        </div>
+        <img
+          src=""
+          alt=""
+          class="relative max-h-[90vh] max-w-[90vw] w-auto h-auto object-contain opacity-0 transition-opacity duration-300"
+          data-favorites-lightbox-image
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete account confirmation modal -->
+  <dialog
+    data-delete-account-modal
+    class="fixed inset-0 z-50 m-auto w-full max-w-sm rounded-xl border border-gray-200 bg-white p-0 shadow-2xl backdrop:bg-black/50"
+  >
+    <div class="p-6">
+      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-600">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-center">{t('account.delete.title')}</h2>
+      <p class="mt-2 text-sm text-gray-600 text-center">{t('account.delete.description')}</p>
+      <button
+        type="button"
+        data-delete-account-confirm
+        class="mt-6 w-full cursor-pointer rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
+      >
+        {t('account.delete.confirm')}
+      </button>
+      <button
+        type="button"
+        data-delete-account-cancel
+        class="mt-3 w-full cursor-pointer rounded-lg px-4 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-100"
+      >
+        {t('account.delete.cancel')}
+      </button>
+    </div>
+  </dialog>
+
+<style>
+  .favorites-masonry {
+    column-count: 1;
+    column-gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .favorites-masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 1024px) {
+    .favorites-masonry {
+      column-count: 3;
+    }
+  }
+  .favorites-masonry :global(.masonry-item) {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+</style>
+</Layout>
+
+<script
+  is:inline
+  type="application/json"
+  data-favorites-page-config
+  set:html={JSON.stringify({
+    locale,
+    removeLabel: t('favorites.remove'),
+    removeAriaLabel: t('favorites.remove.aria'),
+    homePath: `/${locale}/`,
+  })}
+/>
+
+<script>
+  import {
+    FAVORITES_CHANGED_EVENT,
+    getFavorites,
+    removeFavorite,
+    isAuthenticated,
+    ready,
+  } from '@/lib/favorites';
+  import { supabase } from '@/lib/supabase';
+  import { formatPostDate } from '@/lib/date';
+
+  const configEl = document.querySelector('[data-favorites-page-config]');
+  if (configEl instanceof HTMLScriptElement) {
+    type FavoritesPageConfig = {
+      locale?: string;
+      removeLabel?: string;
+      removeAriaLabel?: string;
+      homePath?: string;
+    };
+    type PostHogCapture = {
+      capture?: (eventName: string, properties?: Record<string, unknown>) => void;
+    };
+
+    const config = JSON.parse(configEl.textContent || '{}') as FavoritesPageConfig;
+    const favoritesGrid = document.querySelector('[data-favorites-grid]');
+    const emptyState = document.querySelector('[data-favorites-empty]');
+    const authRequired = document.querySelector('[data-favorites-auth-required]');
+    const loginButton = document.querySelector('[data-favorites-login]');
+    const posthog = (window as Window & { posthog?: PostHogCapture }).posthog;
+
+    // Lightbox elements
+    const lbOverlay = document.querySelector<HTMLElement>('[data-favorites-lightbox]');
+    const lbImage = document.querySelector<HTMLImageElement>('[data-favorites-lightbox-image]');
+    const lbSpinner = document.querySelector<HTMLElement>('[data-favorites-lightbox-spinner]');
+    const lbClose = document.querySelector('[data-favorites-lightbox-close]');
+    const lbPrev = document.querySelector('[data-favorites-lightbox-prev]');
+    const lbNext = document.querySelector('[data-favorites-lightbox-next]');
+    const signoutButton = document.querySelector<HTMLElement>('[data-favorites-signout]');
+    const deleteAccountButton = document.querySelector<HTMLElement>('[data-account-delete]');
+    const deleteAccountModal = document.querySelector<HTMLDialogElement>('[data-delete-account-modal]');
+    const deleteAccountConfirm = document.querySelector('[data-delete-account-confirm]');
+    const deleteAccountCancel = document.querySelector('[data-delete-account-cancel]');
+
+    // Show sign-out and delete account links when authenticated
+    ready.then(() => {
+      if (isAuthenticated()) {
+        signoutButton?.classList.remove('hidden');
+        deleteAccountButton?.classList.remove('hidden');
+      }
+    });
+    signoutButton?.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.reload();
+    });
+
+    // Delete account modal
+    deleteAccountButton?.addEventListener('click', () => {
+      deleteAccountModal?.showModal();
+    });
+    deleteAccountCancel?.addEventListener('click', () => {
+      deleteAccountModal?.close();
+    });
+    deleteAccountModal?.addEventListener('click', (e) => {
+      if (e.target === deleteAccountModal) deleteAccountModal.close();
+    });
+    deleteAccountConfirm?.addEventListener('click', async () => {
+      await supabase.rpc('delete_user_account');
+      await supabase.auth.signOut();
+      window.location.href = config.homePath || '/';
+    });
+
+    if (
+      favoritesGrid instanceof HTMLElement &&
+      emptyState instanceof HTMLElement &&
+      authRequired instanceof HTMLElement
+    ) {
+      const removeLabel = String(config.removeLabel || 'Remove');
+      const removeAriaLabel = String(
+        config.removeAriaLabel || 'Remove photo from favorites'
+      );
+
+      const IMAGE_BASE = 'https://images.wannabes.be/';
+      const extractHiresPath = (url: string) => {
+        if (!url.startsWith(IMAGE_BASE)) return url;
+        const path = url.slice(IMAGE_BASE.length);
+        const segments = path.split('/');
+        const firstNonTransform = segments.findIndex(
+          (s) => !/^[SFQ]=/.test(s)
+        );
+        return firstNonTransform >= 0
+          ? segments.slice(firstNonTransform).join('/')
+          : path;
+      };
+      const buildGridImageUrl = (fullUrl: string) => {
+        const hires = extractHiresPath(fullUrl);
+        return `${IMAGE_BASE}S=W750,H750/${hires}`;
+      };
+
+      const formatFavoriteDate = (rawDate: string) => {
+        const trimmed = rawDate.trim();
+        if (!trimmed) return '';
+        const parsed = new Date(trimmed);
+        if (Number.isNaN(parsed.getTime())) return trimmed;
+        return formatPostDate(parsed.toISOString());
+      };
+
+      // ---------------------------------------------------------------
+      // Lightbox controller
+      // ---------------------------------------------------------------
+      type LightboxEntry = { url: string; alt: string };
+      let lightboxImages: LightboxEntry[] = [];
+      let lightboxIndex = 0;
+
+      const openLightbox = (index: number) => {
+        if (!lbOverlay || !lbImage || lightboxImages.length === 0) return;
+        if (index < 0 || index >= lightboxImages.length) return;
+        lightboxIndex = index;
+        const entry = lightboxImages[lightboxIndex];
+        lbImage.classList.add('opacity-0');
+        if (lbSpinner) lbSpinner.style.display = 'flex';
+        lbImage.src = entry.url;
+        lbImage.alt = entry.alt;
+        lbOverlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        posthog?.capture?.('lightbox_opened', {
+          image_index: index,
+          total_images: lightboxImages.length,
+        });
+      };
+
+      const closeLightbox = () => {
+        if (!lbOverlay || !lbImage) return;
+        lbOverlay.classList.add('hidden');
+        document.body.style.overflow = '';
+        lbImage.src = '';
+      };
+
+      const showPrev = () => {
+        if (lightboxImages.length === 0) return;
+        openLightbox(
+          (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length
+        );
+      };
+
+      const showNext = () => {
+        if (lightboxImages.length === 0) return;
+        openLightbox((lightboxIndex + 1) % lightboxImages.length);
+      };
+
+      lbImage?.addEventListener('load', () => {
+        if (lbSpinner) lbSpinner.style.display = 'none';
+        lbImage.classList.remove('opacity-0');
+      });
+
+      lbClose?.addEventListener('click', closeLightbox);
+      lbPrev?.addEventListener('click', showPrev);
+      lbNext?.addEventListener('click', showNext);
+
+      lbOverlay?.addEventListener('click', (e) => {
+        if (e.target === lbOverlay) closeLightbox();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (lbOverlay?.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeLightbox();
+        else if (e.key === 'ArrowLeft') showPrev();
+        else if (e.key === 'ArrowRight') showNext();
+      });
+
+      // ---------------------------------------------------------------
+      // Render favorites grid
+      // ---------------------------------------------------------------
+      const renderFavorites = () => {
+        if (!isAuthenticated()) {
+          authRequired.classList.remove('hidden');
+          emptyState.classList.add('hidden');
+          favoritesGrid.classList.add('hidden');
+          return;
+        }
+
+        authRequired.classList.add('hidden');
+        const favorites = getFavorites();
+        favoritesGrid.innerHTML = '';
+        lightboxImages = [];
+        emptyState.classList.toggle('hidden', favorites.length > 0);
+        favoritesGrid.classList.toggle('hidden', favorites.length === 0);
+
+        favorites.forEach((favorite, idx) => {
+          const w = Number(favorite.width || 500);
+          const h = Number(favorite.height || 500);
+
+          // Build lightbox image list
+          lightboxImages.push({
+            url: favorite.fullUrl,
+            alt: `${favorite.artistName} at ${favorite.venueName}`,
+          });
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'group masonry-item cursor-pointer';
+          wrapper.addEventListener('click', () => openLightbox(idx));
+
+          const article = document.createElement('article');
+          article.className = 'relative overflow-hidden';
+          article.style.boxShadow = '0 30px 60px -10px rgba(0, 0, 0, 0.2)';
+          article.style.aspectRatio = `${w} / ${h}`;
+
+          const image = document.createElement('img');
+          image.src = buildGridImageUrl(favorite.fullUrl);
+          image.alt = `${favorite.artistName} at ${favorite.venueName}`;
+          image.width = w;
+          image.height = h;
+          image.loading = 'lazy';
+          image.className =
+            'object-cover w-full h-full transition-transform duration-300 group-hover:scale-105';
+          article.appendChild(image);
+
+          const overlay = document.createElement('div');
+          overlay.className =
+            'absolute inset-0 bg-gradient-to-t from-black/30 to-transparent';
+
+          const meta = document.createElement('div');
+          meta.className =
+            'absolute bottom-0 left-0 right-0 p-4 text-white flex flex-row items-center justify-between';
+
+          const title = document.createElement('h3');
+          title.className = 'font-bold text-lg uppercase';
+          title.textContent = favorite.artistName;
+
+          const subtitle = document.createElement('p');
+          subtitle.className = 'text-sm opacity-75';
+          subtitle.textContent = `${favorite.venueName} — ${formatFavoriteDate(favorite.date)}`;
+
+          meta.append(title, subtitle);
+          overlay.appendChild(meta);
+
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className =
+            'absolute right-2 top-2 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 hover:bg-black/70 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
+          removeButton.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+          removeButton.setAttribute('aria-label', removeAriaLabel);
+          removeButton.setAttribute('title', removeLabel);
+          removeButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await removeFavorite(favorite.imageId);
+            posthog?.capture?.('favorite_removed', {
+              image_id: favorite.imageId,
+              album_slug: favorite.albumSlug,
+              total_favorites: getFavorites().length,
+            });
+          });
+
+          article.append(overlay, removeButton);
+          wrapper.appendChild(article);
+          favoritesGrid.appendChild(wrapper);
+        });
+      };
+
+      // Sign in directly with Google
+      loginButton?.addEventListener('click', async () => {
+        const fallbackCallback = `/${config.locale || 'nl'}/auth/callback`;
+        const callbackPath = (loginButton as HTMLElement).dataset.callbackPath || fallbackCallback;
+        sessionStorage.setItem('behangmotief:auth-redirect', window.location.href);
+        await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}${callbackPath}`,
+          },
+        });
+      });
+
+      // Wait for favorites to initialize before rendering
+      ready.then(() => {
+        renderFavorites();
+
+        posthog?.capture?.('favorites_page_viewed', {
+          total_favorites: getFavorites().length,
+          is_authenticated: isAuthenticated(),
+          locale: config.locale || null,
+        });
+      });
+
+      window.addEventListener(FAVORITES_CHANGED_EVENT, renderFavorites);
+    }
+  }
+</script>

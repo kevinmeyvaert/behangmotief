@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslatedPath, useTranslations } from '../../../i18n/utils';
+import { routes } from '@/i18n/ui';
 import { albumsService } from '@/services/albums.service';
 import AlbumLightbox from '@/components/AlbumLightbox.astro';
 import BlurHashImage from '@/components/BlurHashImage.astro';
@@ -16,6 +17,9 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 const archivePath = `${translatePath('/archive')}/`;
+const favoritesPath = `${archivePath}${routes[lang].favorites}/`;
+const addFavoriteAriaLabel = t('favorites.add.aria');
+const removeFavoriteAriaLabel = t('favorites.remove.aria');
 
 // Join the slug array into a path string
 const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
@@ -88,15 +92,33 @@ const imageGallerySchema = getImageGallerySchema(
   <main>
     <article>
       <section class="container mx-auto mb-12 px-4 md:px-0">
-        <a
-          href={archivePath}
-          data-archive-root={archivePath}
-          data-back-link
-          class="inline-flex items-center gap-2 mb-8 text-gray-500 hover:text-black transition-colors"
-        >
-          <span aria-hidden="true">←</span>
-          {t('album.back')}
-        </a>
+        <div class="mb-8 flex items-center justify-between gap-3">
+          <a
+            href={archivePath}
+            data-archive-root={archivePath}
+            data-back-link
+            class="inline-flex items-center gap-2 text-gray-500 hover:text-black transition-colors"
+          >
+            <span aria-hidden="true">←</span>
+            {t('album.back')}
+          </a>
+          <div class="flex items-center gap-3">
+            <a
+              href={favoritesPath}
+              class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
+            >
+              <span>{t('favorites.link')}</span>
+              <span
+                class="inline-flex min-w-6 justify-center rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold"
+                data-favorites-context-count
+                aria-live="polite"
+                aria-label={t('favorites.count.aria')}
+              >
+                0
+              </span>
+            </a>
+          </div>
+        </div>
         <header class="text-center mb-12">
           <h1 class="text-4xl font-bold">{post.artist.name}</h1>
           <p class="text-gray-500">
@@ -108,7 +130,7 @@ const imageGallerySchema = getImageGallerySchema(
           {
             post.images.map((image) => (
               <div
-                class="aspect-square overflow-hidden cursor-pointer"
+                class="relative aspect-square overflow-hidden cursor-pointer group"
                 style={{
                   boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.2)',
                 }}
@@ -118,7 +140,42 @@ const imageGallerySchema = getImageGallerySchema(
                 data-blurhash={image.blurhash}
                 data-width={image.dimensions?.width || 800}
                 data-height={image.dimensions?.height || 800}
+                data-favorite-image-id={image.id}
+                data-favorite-album-slug={slugPath}
+                data-favorite-artist={post.artist.name}
+                data-favorite-venue={post.venue.name}
+                data-favorite-date={post.date}
+                data-favorite-thumb={ImageUrlBuilder.square(image.hires, 500)}
+                data-favorite-full={ImageUrlBuilder.hero(image.hires)}
+                data-favorite-blurhash={image.blurhash}
+                data-favorite-width={image.dimensions?.width || 800}
+                data-favorite-height={image.dimensions?.height || 800}
               >
+                <button
+                  type="button"
+                  class="absolute right-2 top-2 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  data-favorite-toggle
+                  data-favorite-add-label={addFavoriteAriaLabel}
+                  data-favorite-remove-label={removeFavoriteAriaLabel}
+                  aria-pressed="false"
+                  aria-label={addFavoriteAriaLabel}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    class="h-4 w-4"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="none"
+                    aria-hidden="true"
+                    data-favorite-icon
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 20.4C11.5 20.1 10.8 19.7 10 19.1C7.8 17.6 4 14.7 4 10.9C4 8.5 5.8 6.7 8.2 6.7C9.6 6.7 11 7.4 11.9 8.6C12.8 7.4 14.2 6.7 15.6 6.7C18 6.7 19.8 8.5 19.8 10.9C19.8 14.7 16 17.6 13.8 19.1C13.1 19.6 12.5 20 12 20.4Z"></path>
+                  </svg>
+                </button>
                 <BlurHashImage
                   src={ImageUrlBuilder.square(image.hires, 500)}
                   alt={`${post.artist.name} at ${post.venue.name}`}
@@ -172,6 +229,130 @@ const imageGallerySchema = getImageGallerySchema(
     });
   </script>
   <script>
+    import {
+      FAVORITES_CHANGED_EVENT,
+      getFavoritesCount,
+      isFavorite,
+      toggleFavorite,
+      ready,
+    } from '@/lib/favorites';
+    import type { FavoritePhotoInput } from '@/lib/favorites';
+
+    type PostHogCapture = {
+      capture?: (eventName: string, properties?: Record<string, unknown>) => void;
+    };
+
+    const posthog = (window as Window & { posthog?: PostHogCapture }).posthog;
+    const favoriteButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-favorite-toggle]')
+    );
+    const countElements = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-favorites-context-count]')
+    );
+
+    const setButtonState = (button: HTMLButtonElement, active: boolean) => {
+      const addLabel = button.getAttribute('data-favorite-add-label') || 'Add photo to favorites';
+      const removeLabel =
+        button.getAttribute('data-favorite-remove-label') || 'Remove photo from favorites';
+      const icon = button.querySelector('[data-favorite-icon]');
+
+      button.setAttribute('aria-pressed', String(active));
+      button.setAttribute('aria-label', active ? removeLabel : addLabel);
+      button.classList.toggle('bg-rose-600', active);
+      button.classList.toggle('border-rose-500', active);
+      button.classList.toggle('bg-black/50', !active);
+      button.classList.toggle('border-white/30', !active);
+      // Keep favorited hearts always visible
+      button.classList.toggle('opacity-100', active);
+      if (icon instanceof SVGElement) {
+        icon.setAttribute('fill', active ? 'currentColor' : 'none');
+      }
+    };
+
+    const syncFavoriteButtonStates = () => {
+      favoriteButtons.forEach((button) => {
+        const tile = button.closest('[data-favorite-image-id]');
+        if (!(tile instanceof HTMLElement)) return;
+        const imageId = tile.dataset.favoriteImageId || '';
+        setButtonState(button, isFavorite(imageId));
+      });
+    };
+
+    const updateFavoriteCounts = () => {
+      const count = getFavoritesCount();
+      countElements.forEach((element) => {
+        element.textContent = String(count);
+      });
+    };
+
+    const readFavoritePayload = (button: HTMLButtonElement): FavoritePhotoInput | null => {
+      const tile = button.closest('[data-favorite-image-id]');
+      if (!(tile instanceof HTMLElement)) return null;
+
+      const imageId = tile.dataset.favoriteImageId || '';
+      const albumSlug = tile.dataset.favoriteAlbumSlug || '';
+      const artistName = tile.dataset.favoriteArtist || '';
+      const venueName = tile.dataset.favoriteVenue || '';
+      const date = tile.dataset.favoriteDate || '';
+      const thumbUrl = tile.dataset.favoriteThumb || '';
+      const fullUrl = tile.dataset.favoriteFull || '';
+
+      if (!imageId || !albumSlug || !thumbUrl || !fullUrl) return null;
+
+      const width = Number(tile.dataset.favoriteWidth || 0);
+      const height = Number(tile.dataset.favoriteHeight || 0);
+
+      return {
+        imageId,
+        albumSlug,
+        artistName,
+        venueName,
+        date,
+        thumbUrl,
+        fullUrl,
+        blurhash: tile.dataset.favoriteBlurhash || undefined,
+        width: Number.isFinite(width) && width > 0 ? width : undefined,
+        height: Number.isFinite(height) && height > 0 ? height : undefined,
+      };
+    };
+
+    favoriteButtons.forEach((button) => {
+      button.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const payload = readFavoritePayload(button);
+        if (!payload) return;
+
+        await ready;
+
+        const wasFavorite = isFavorite(payload.imageId);
+        await toggleFavorite(payload);
+        const nowFavorite = isFavorite(payload.imageId);
+
+        if (wasFavorite !== nowFavorite) {
+          setButtonState(button, nowFavorite);
+          posthog?.capture?.(nowFavorite ? 'favorite_added' : 'favorite_removed', {
+            image_id: payload.imageId,
+            album_slug: payload.albumSlug,
+            total_favorites: getFavoritesCount(),
+          });
+        }
+      });
+    });
+
+    // Sync state once favorites are loaded
+    ready.then(() => {
+      syncFavoriteButtonStates();
+      updateFavoriteCounts();
+    });
+
+    window.addEventListener(FAVORITES_CHANGED_EVENT, () => {
+      syncFavoriteButtonStates();
+      updateFavoriteCounts();
+    });
+  </script>
+  <script>
     const backLink = document.querySelector('[data-back-link]');
 
     if (backLink instanceof HTMLAnchorElement) {
@@ -179,6 +360,27 @@ const imageGallerySchema = getImageGallerySchema(
       const withTrailingSlash = (value: string) =>
         value.endsWith('/') ? value : `${value}/`;
       const normalizedArchiveRoot = withTrailingSlash(archiveRoot);
+      const currentPathname = withTrailingSlash(window.location.pathname);
+
+      const toInternalPath = (candidate: string | null) => {
+        if (!candidate) return null;
+
+        try {
+          const parsed = new URL(candidate, window.location.origin);
+          const parsedPathname = withTrailingSlash(parsed.pathname);
+
+          if (parsed.origin !== window.location.origin) return null;
+
+          // Skip lightbox history URLs and self-links for this album.
+          if (parsed.searchParams.has('image')) return null;
+          if (parsedPathname === currentPathname) return null;
+
+          return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        } catch {
+          return null;
+        }
+      };
+
       const toArchivePath = (candidate: string | null) => {
         if (!candidate) return null;
 
@@ -200,18 +402,19 @@ const imageGallerySchema = getImageGallerySchema(
       };
 
       backLink.addEventListener('click', (event) => {
-        if (window.history.length > 1) {
-          event.preventDefault();
-          const archiveReferrerPath = toArchivePath(document.referrer);
-          if (archiveReferrerPath) {
-            window.location.assign(archiveReferrerPath);
-          } else {
-            window.history.back();
-          }
+        event.preventDefault();
+        const archiveReferrerPath = toArchivePath(document.referrer);
+        if (archiveReferrerPath) {
+          window.location.assign(archiveReferrerPath);
           return;
         }
 
-        event.preventDefault();
+        const internalReferrerPath = toInternalPath(document.referrer);
+        if (internalReferrerPath) {
+          window.location.assign(internalReferrerPath);
+          return;
+        }
+
         window.location.assign(archiveRoot);
       });
     }
