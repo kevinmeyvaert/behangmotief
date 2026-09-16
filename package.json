@@ -7,8 +7,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "codegen": "graphql-codegen -c wannabes.yml",
-    "check": "astro check"
+    "check": "astro check",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
@@ -18,8 +18,6 @@
     "@vercel/speed-insights": "^2.0.0",
     "astro": "^7.2.2",
     "blurhash": "^2.0.5",
-    "graphql": "^16.12.0",
-    "graphql-request": "^7.4.0",
     "posthog-js": "^1.417.2",
     "posthog-node": "^5.24.15",
     "sharp": "^0.35.3",
@@ -28,11 +26,10 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@graphql-codegen/cli": "^7.2.0",
-    "@graphql-codegen/typescript-operations": "^6.1.6",
     "@types/node": "^26.2.0",
     "knip": "^6.32.2",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vite": "^8.2.1"
   },
@@ -42,9 +39,6 @@
   "knip": {
     "entry": [
       "src/lib/wannabes-image-service.ts"
-    ],
-    "ignoreDependencies": [
-      "@graphql-codegen/typescript-operations"
     ]
   }
 }

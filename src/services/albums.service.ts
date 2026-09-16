@@ -1,8 +1,7 @@
-import { fetcher } from '@/lib/graphql-client';
-import { ImageUrlBuilder } from '@/lib/image-url-builder';
-import { POSTS, ALBUM, RELATED_ALBUMS } from '@/lib/queries';
-import type { AlbumPost } from '@/types/components';
-import type { AlbumQuery, RelatedPostsQuery, SearchQuery } from '@/types/wannabes.types';
+import { wannabesApi } from '../lib/wannabes-api';
+import { mapImage, mapPost } from '../lib/album-mapper';
+import { PHOTOGRAPHER_FILTER, WannabesHttpError, type WannabesClient } from '../lib/rest-client';
+import type { AlbumDetail, AlbumPost } from '../types/components';
 
 interface AlbumSearchParams {
   start?: number;
@@ -10,91 +9,56 @@ interface AlbumSearchParams {
   searchTerm?: string;
 }
 
-interface RelatedAlbumsParams {
-  artistSlug?: string;
-  venueSlug?: string;
-}
+export class AlbumsService {
+  constructor(private api: WannabesClient = wannabesApi) {}
 
-type RelatedAlbum = RelatedPostsQuery['sameArtist']['data'][number];
-type AlbumDetail = AlbumQuery['post'];
-/** The album plus its resolved cover photo URL, used for the share card. */
-type AlbumDetailWithCover = AlbumDetail & { coverImage?: string };
-
-const isKevinPhoto = (photographer?: { firstName: string }) =>
-  photographer?.firstName === 'Kevin';
-
-class AlbumsService {
   async searchAlbums({ start = 0, limit = 12, searchTerm }: AlbumSearchParams = {}) {
-    const data = await fetcher<SearchQuery>(POSTS, {
-      start,
-      limit,
-      all: searchTerm || undefined,
+    const data = await this.api.listPosts({
+      ...PHOTOGRAPHER_FILTER,
+      page: Math.floor(start / limit) + 1,
+      per_page: limit,
+      q: searchTerm,
+      sort: '-date',
     });
+    return {
+      albums: data.data.map(mapPost).filter((post): post is AlbumPost => post !== null),
+      pagination: {
+        start: (data.meta.current_page - 1) * data.meta.per_page,
+        limit: data.meta.per_page,
+        total: data.meta.total,
+      },
+    };
+  }
 
-    if (!data?.posts) {
-      return {
-        albums: [],
-        pagination: { start: 0, limit: 12, total: 0 }
-      };
+  async getAlbumBySlug(slug: string): Promise<AlbumDetail | null> {
+    try {
+      const { data } = await this.api.getPost(slug, PHOTOGRAPHER_FILTER);
+      const images = data.photos.map(mapImage).filter((image) => image !== null);
+      const post = mapPost(data);
+      if (!post || !images.length) return null;
+      return { ...post, url: data.url, images, coverImage: post.thumbnail.url };
+    } catch (error) {
+      if (error instanceof WannabesHttpError && error.status === 404) return null;
+      throw error;
     }
-
-    const filteredAlbums = data.posts.data.filter(
-      (post) =>
-        isKevinPhoto(post.thumbnail?.photographer) ||
-        post.images.some((img) => isKevinPhoto(img.photographer))
-    ) as AlbumPost[];
-
-    return {
-      albums: filteredAlbums,
-      pagination: data.posts.pagination
-    };
   }
 
-  async getAlbumBySlug(slug: string): Promise<AlbumDetailWithCover | null> {
-    const data = await fetcher<AlbumQuery>(ALBUM, { slug });
-
-    if (!data?.post) {
-      return null;
-    }
-
-    const kevinImages = data.post.images.filter((img) =>
-      isKevinPhoto(img.photographer)
-    );
-
-    // The album cover, unless it is another photographer's shot — the same rule
-    // the archive grid applies through checkThumbnails.
-    const coverImage = isKevinPhoto(data.post.thumbnail?.photographer)
-      ? data.post.thumbnail.resized
-      : kevinImages[0] && ImageUrlBuilder.build(kevinImages[0].hires);
-
-    return {
-      ...data.post,
-      images: kevinImages,
-      coverImage: coverImage || undefined
+  async getRelatedAlbums({ artistSlug, venueSlug, exclude }: {
+    artistSlug?: string; venueSlug?: string; exclude?: string;
+  }) {
+    const search = async (filter: { artist?: string; venue?: string }) => {
+      const data = await this.api.listPosts({ ...PHOTOGRAPHER_FILTER, ...filter, exclude, per_page: 4, sort: 'random' });
+      return data.data.map(mapPost).filter((post): post is AlbumPost => post !== null);
     };
+    const [sameArtist, sameVenue] = await Promise.all([
+      artistSlug ? search({ artist: artistSlug }) : [],
+      venueSlug ? search({ venue: venueSlug }) : [],
+    ]);
+    return { sameArtist, sameVenue };
   }
 
-  async getRelatedAlbums({ artistSlug, venueSlug }: RelatedAlbumsParams) {
-    const data = await fetcher<RelatedPostsQuery>(RELATED_ALBUMS, {
-      artistSlug,
-      venueSlug
-    });
-
-    const filterKevinPhotos = (posts: RelatedAlbum[]) =>
-      posts.filter(
-        (post) =>
-          isKevinPhoto(post.thumbnail?.photographer) ||
-          post.images.some((img) => isKevinPhoto(img.photographer))
-      ) as AlbumPost[];
-
-    return {
-      sameArtist: filterKevinPhotos(data?.sameArtist?.data || []),
-      sameVenue: filterKevinPhotos(data?.sameVenue?.data || [])
-    };
-  }
-
-  async getRecentAlbums(limit: number = 6) {
-    const { albums } = await this.searchAlbums({ limit, start: 0 });
+  async getRecentAlbums(limit = 6) {
+    const { albums } = await this.searchAlbums({ limit });
     return albums;
   }
 }

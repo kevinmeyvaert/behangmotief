@@ -8,11 +8,11 @@ interface ImageTransformOptions {
 }
 
 /**
- * Every host the Wannabes CDN serves images from. images.wannabes.be redirects
- * to r.wannabes.be, and anything validating a final URL needs both. Single
+ * REST image sizes use media.wannabes.be. Curated legacy images use
+ * images.wannabes.be, which redirects to r.wannabes.be. Single
  * source for astro.config.mjs `image.domains` and the routes that fetch images.
  */
-export const WANNABES_IMAGE_HOSTS = ['images.wannabes.be', 'r.wannabes.be'] as const;
+export const WANNABES_IMAGE_HOSTS = ['images.wannabes.be', 'r.wannabes.be', 'media.wannabes.be'] as const;
 
 export interface ParsedImageUrl {
   path: string;
