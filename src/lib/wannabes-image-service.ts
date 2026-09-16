@@ -1,5 +1,5 @@
 import type { ExternalImageService, ImageTransform } from 'astro';
-import { ImageUrlBuilder } from './image-url-builder';
+import { ImageUrlBuilder, MEDIA_SIZES } from './image-url-builder';
 
 /**
  * Points `<Image />` straight at the Wannabes image CDN.
@@ -17,6 +17,14 @@ const resolveSrc = (src: ImageTransform['src']) =>
 
 const buildUrl = (options: ImageTransform) => {
   const src = resolveSrc(options.src);
+  const media = ImageUrlBuilder.mediaSize(
+    src,
+    options.width && options.width <= MEDIA_SIZES.medium ? 'medium' : 'large'
+  );
+  if (media) {
+    return media;
+  }
+
   const parsed = ImageUrlBuilder.parse(src);
 
   // Local files and anything not served by Wannabes are used as-is.
@@ -43,16 +51,19 @@ const service: ExternalImageService = {
 
   getSrcSet(options) {
     const { widths, ...transform } = options;
-    // Only Wannabes URLs can be resized, so anything else would emit the same
-    // URL under every descriptor.
-    if (!widths?.length || !ImageUrlBuilder.parse(resolveSrc(options.src))) {
-      return [];
-    }
-
+    const src = resolveSrc(options.src);
     const aspectRatio =
       options.width && options.height ? options.width / options.height : undefined;
 
-    return widths.map((width) => ({
+    // media.wannabes.be only stores fixed sizes, and only Wannabes URLs can be
+    // resized, so anything else would emit the same URL under every descriptor.
+    const srcsetWidths = ImageUrlBuilder.mediaSize(src, 'large')
+      ? Object.values(MEDIA_SIZES)
+      : widths?.length && ImageUrlBuilder.parse(src)
+        ? widths
+        : [];
+
+    return srcsetWidths.map((width) => ({
       transform: {
         ...transform,
         width,

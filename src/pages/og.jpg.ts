@@ -56,7 +56,8 @@ async function resolveBackground(src: string | null): Promise<Buffer> {
     // Request a card-sized variant rather than the full-resolution original.
     const parsed = ImageUrlBuilder.parse(src);
     const response = await fetch(
-      parsed ? ImageUrlBuilder.build(parsed.path, { width: OG_IMAGE_WIDTH }) : src
+      ImageUrlBuilder.mediaSize(src, 'large') ??
+        (parsed ? ImageUrlBuilder.build(parsed.path, { width: OG_IMAGE_WIDTH }) : src)
     );
 
     // A missing image redirects to an HTML error page, which still reports ok,

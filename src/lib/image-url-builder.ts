@@ -19,9 +19,32 @@ export interface ParsedImageUrl {
   crop?: ImageTransformOptions['crop'];
 }
 
+/** Widths of the resized copies media.wannabes.be keeps next to each original. */
+export const MEDIA_SIZES = { medium: 800, large: 1600 } as const;
+
 export class ImageUrlBuilder {
   private static readonly BASE_URL = 'https://images.wannabes.be';
   private static readonly TRANSFORM_SEGMENT = /^[SFQ]=/;
+  private static readonly MEDIA_URL =
+    /^https:\/\/media\.wannabes\.be\/(\d+)\/(?:conversions\/)?(.+?)(?:-(?:medium|large))?\.(?:jpg|jpeg|png|webp)(\?.*)?$/;
+
+  /**
+   * Point a media.wannabes.be original, medium or large URL at another stored
+   * size. Square thumbs are left alone because they are cropped.
+   */
+  static mediaSize(url: string, size: keyof typeof MEDIA_SIZES): string | null {
+    if (url.includes('-thumb')) {
+      return null;
+    }
+
+    const match = url.match(this.MEDIA_URL);
+    if (!match) {
+      return null;
+    }
+
+    const [, id, name, query = ''] = match;
+    return `https://media.wannabes.be/${id}/conversions/${name}-${size}.jpg${query}`;
+  }
 
   /**
    * Split a Wannabes URL back into its image path and crop mode, dropping any

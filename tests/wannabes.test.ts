@@ -4,6 +4,7 @@ import { createWannabesClient, UpstreamUnavailableError, WannabesHttpError } fro
 import { mapImage, mapPost } from '../src/lib/album-mapper';
 import { AlbumsService } from '../src/services/albums.service';
 import { concurrentMap } from '../src/lib/concurrent-map';
+import { ImageUrlBuilder } from '../src/lib/image-url-builder';
 import type { ImageResource, PostDetailResource, PostResource } from '../src/types/wannabes.types';
 
 const photo: ImageResource = {
@@ -142,4 +143,15 @@ test('gallery detail fan-out preserves order and limits concurrent requests', as
   });
   assert.deepEqual(result, [2, 4, 6, 8, 10, 12]);
   assert.equal(peak, 2);
+});
+
+test('media URLs resolve to stored medium and large sizes, leaving square thumbs alone', () => {
+  const original = 'https://media.wannabes.be/5080/2023-balthazar-qsbntqA3fg52bzigc.webp?v=1';
+  const large = 'https://media.wannabes.be/5080/conversions/2023-balthazar-qsbntqA3fg52bzigc-large.jpg?v=1';
+  const medium = 'https://media.wannabes.be/5080/conversions/2023-balthazar-qsbntqA3fg52bzigc-medium.jpg?v=1';
+  assert.equal(ImageUrlBuilder.mediaSize(original, 'large'), large);
+  assert.equal(ImageUrlBuilder.mediaSize(large, 'medium'), medium);
+  assert.equal(ImageUrlBuilder.mediaSize(medium, 'large'), large);
+  assert.equal(ImageUrlBuilder.mediaSize('https://media.wannabes.be/42/conversions/a-thumb.jpg?v=1', 'large'), null);
+  assert.equal(ImageUrlBuilder.mediaSize('https://images.wannabes.be/S=W750/a.jpg', 'large'), null);
 });
