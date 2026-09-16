@@ -4,113 +4,38 @@ import { WANNABES_IMAGE_HOSTS } from './src/lib/image-url-builder';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
+import { loadEnv } from 'vite';
+import { createWannabesClient, PHOTOGRAPHER_SLUG } from './src/lib/rest-client';
 
 const SITE_URL = 'https://www.behangmotief.be';
-const WANNABES_API_ENDPOINT = 'https://graphql.wannabes.be/graphql';
-const SITEMAP_PAGE_SIZE = 250;
-const SITEMAP_FETCH_TIMEOUT_MS = 60000;
-const SITEMAP_FETCH_RETRIES = 3;
-
-const SITEMAP_ALBUMS_QUERY = `
-  query SitemapAlbums($start: Int!, $limit: Int!) {
-    postSearch(
-      photographerSlug: "kevin-meyvaert"
-      start: $start
-      limit: $limit
-    ) {
-      data {
-        slug
-      }
-      pagination {
-        total
-        start
-        limit
-      }
-    }
-  }
-`;
-
-/**
- * @param {string} query
- * @param {Record<string, unknown>} variables
- * @param {number} [attempt]
- * @returns {Promise<any>}
- */
-async function fetchGraphQLWithRetry(query, variables, attempt = 1) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(WANNABES_API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ query, variables }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Unexpected status ${response.status}`);
-    }
-
-    const payload = await response.json();
-
-    if (payload.errors?.length) {
-      throw new Error(payload.errors[0]?.message || 'Unknown GraphQL error');
-    }
-
-    return payload.data;
-  } catch (error) {
-    if (attempt >= SITEMAP_FETCH_RETRIES) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `Failed to fetch sitemap album data after ${SITEMAP_FETCH_RETRIES} attempts: ${message}`
-      );
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, attempt * 500));
-    return fetchGraphQLWithRetry(query, variables, attempt + 1);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+const SITEMAP_PAGE_SIZE = 100;
+const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), 'WANNABES_');
+const api = createWannabesClient({
+  baseUrl: process.env.WANNABES_API_URL || env.WANNABES_API_URL,
+  apiKey: process.env.WANNABES_API_KEY || env.WANNABES_API_KEY,
+  timeoutMs: 15000,
+});
 
 async function getAlbumSitemapPages() {
   /** @type {string[]} */
   const slugs = [];
-  let start = 0;
-  let total = Number.POSITIVE_INFINITY;
+  let page = 1;
+  let lastPage = 1;
 
-  while (start < total) {
-    const data = await fetchGraphQLWithRetry(SITEMAP_ALBUMS_QUERY, {
-      start,
-      limit: SITEMAP_PAGE_SIZE,
+  do {
+    const result = await api.listPosts({
+      photographer: PHOTOGRAPHER_SLUG,
+      page,
+      per_page: SITEMAP_PAGE_SIZE,
+      sort: '-date',
     });
-
-    const postSearch = data?.postSearch;
-    /** @type {Array<{ slug?: string | null }>} */
-    const pageAlbums = Array.isArray(postSearch?.data) ? postSearch.data : [];
-    const pagination = postSearch?.pagination;
-
-    if (!pagination) {
-      throw new Error('Sitemap album pagination data is missing from GraphQL response.');
+    if (!Array.isArray(result.data) || !Number.isInteger(result.meta?.last_page)) {
+      throw new Error('Invalid REST sitemap pagination');
     }
-
-    total = Number(pagination.total || 0);
-    for (const post of pageAlbums) {
-      const slug = post?.slug;
-      if (typeof slug === 'string' && slug.length > 0) {
-        slugs.push(slug);
-      }
-    }
-
-    if (pageAlbums.length === 0) {
-      break;
-    }
-
-    start += Number(pagination.limit || pageAlbums.length);
-  }
+    lastPage = result.meta.last_page;
+    slugs.push(...result.data.map((post) => post.slug));
+    page += 1;
+  } while (page <= lastPage);
 
   const uniqueSlugs = [...new Set(slugs)];
 
@@ -131,7 +56,7 @@ const isLocalDev = process.env.npm_lifecycle_event === 'dev';
 // that cannot start is not. Never let the upstream API block shipping.
 /** @type {string[]} */
 let albumSitemapPages = [];
-if (!isLocalDev) {
+if (process.argv.includes('build') || process.env.npm_lifecycle_event === 'build') {
   try {
     albumSitemapPages = await getAlbumSitemapPages();
   } catch (error) {

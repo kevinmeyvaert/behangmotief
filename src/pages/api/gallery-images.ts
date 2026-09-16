@@ -1,63 +1,10 @@
 import type { APIRoute } from 'astro';
-import { fetcher } from '@/lib/graphql-client';
+import { wannabesApi } from '@/lib/wannabes-api';
+import { PHOTOGRAPHER_FILTER, WannabesHttpError } from '@/lib/rest-client';
+import { mapImage } from '@/lib/album-mapper';
+import { concurrentMap } from '@/lib/concurrent-map';
+import type { PostDetailResource, PostResource } from '@/types/wannabes.types';
 import { getPostHogServer } from '@/lib/posthog-server';
-
-const GALLERY_SEARCH_QUERY = `
-  query GallerySearch($all: String, $limit: Int, $start: Int, $imageWidth: Int!, $imageHeight: Int!) {
-    postSearch(
-      photographerSlug: "kevin-meyvaert"
-      all: $all
-      limit: $limit
-      start: $start
-    ) {
-      data {
-        id
-        date
-        artist {
-          name
-        }
-        venue {
-          name
-        }
-        event {
-          name
-        }
-        images {
-          id
-          resized(width: $imageWidth, height: $imageHeight)
-          photographer {
-            firstName
-          }
-        }
-      }
-    }
-  }
-`;
-
-interface GallerySearchResponse {
-  postSearch?: {
-    data?: Array<{
-      id: string;
-      date?: string | null;
-      artist?: {
-        name?: string | null;
-      } | null;
-      venue?: {
-        name?: string | null;
-      } | null;
-      event?: {
-        name?: string | null;
-      } | null;
-      images?: Array<{
-        id: string;
-        resized?: string | null;
-        photographer?: {
-          firstName?: string | null;
-        } | null;
-      } | null> | null;
-    } | null> | null;
-  } | null;
-}
 
 interface GalleryItem {
   id: string;
@@ -69,9 +16,8 @@ interface GalleryItem {
   showKey: string;
 }
 
-const KEVIN_NAME = 'Kevin';
 const MAX_ARTISTS = 40;
-const IMAGES_PER_ARTIST = 10;
+const POSTS_PER_ARTIST = 10;
 const FALLBACK_LIMIT = 40;
 const MAX_IMAGES = 28;
 const MAX_IMAGES_PER_POST = 2;
@@ -93,12 +39,12 @@ function normalizeDate(value?: string | null) {
   });
 }
 
-function normalizeLocation(post: NonNullable<NonNullable<GallerySearchResponse['postSearch']>['data']>[number]) {
+function normalizeLocation(post: PostResource) {
   return post?.venue?.name || post?.event?.name || 'Unknown location';
 }
 
-function normalizeTitle(post: NonNullable<NonNullable<GallerySearchResponse['postSearch']>['data']>[number]) {
-  return post?.artist?.name || 'Untitled';
+function normalizeTitle(post: PostResource) {
+  return post.artists?.map((artist) => artist.name).join(', ') || post.title || 'Untitled';
 }
 
 function normalizeArtistKey(value: string) {
@@ -111,43 +57,34 @@ function normalizeArtistKey(value: string) {
 }
 
 function extractGalleryItems(
-  posts: NonNullable<NonNullable<GallerySearchResponse['postSearch']>['data']>,
+  posts: PostDetailResource[],
   artistHint: string,
   allowedArtistKeys: Set<string>
 ) {
   const items: GalleryItem[] = [];
 
   for (const post of posts) {
-    if (!post?.images?.length) continue;
+    if (!post.photos.length) continue;
 
     const title = normalizeTitle(post);
     const titleKey = normalizeArtistKey(title);
-    if (allowedArtistKeys.size > 0 && !allowedArtistKeys.has(titleKey)) continue;
+    if (allowedArtistKeys.size > 0 && !allowedArtistKeys.has(titleKey) &&
+      !post.artists?.some((artist) => allowedArtistKeys.has(normalizeArtistKey(artist.name)))) continue;
 
     const location = normalizeLocation(post);
     const date = normalizeDate(post.date);
     const showKey = `${title}|${location}|${date}`;
-    const kevinImages = post.images.filter(
-      (
-        image
-      ): image is {
-        id: string;
-        resized: string;
-        photographer?: {
-          firstName?: string | null;
-        } | null;
-      } => Boolean(image?.resized) && image?.photographer?.firstName === KEVIN_NAME
-    );
+    const kevinImages = post.photos.map(mapImage).filter((image) => image !== null);
     const selectedCount = Math.min(MAX_IMAGES_PER_POST, kevinImages.length);
     if (!selectedCount) continue;
-    const offset = post.id.length % kevinImages.length;
+    const offset = String(post.id).length % kevinImages.length;
 
     for (let i = 0; i < selectedCount; i += 1) {
       const image = kevinImages[(offset + i) % kevinImages.length];
 
       items.push({
         id: image.id,
-        imageUrl: image.resized,
+        imageUrl: image.url,
         title,
         location,
         date,
@@ -229,21 +166,11 @@ function parseImageSize(body: unknown) {
   return { imageWidth, imageHeight };
 }
 
-async function runSearch(
-  all: string | undefined,
-  limit: number,
-  imageWidth: number,
-  imageHeight: number
-) {
-  const response = await fetcher<GallerySearchResponse>(GALLERY_SEARCH_QUERY, {
-    all,
-    limit,
-    start: 0,
-    imageWidth,
-    imageHeight,
+async function runSearch(all: string | undefined, limit: number) {
+  const response = await wannabesApi.listPosts({
+    ...PHOTOGRAPHER_FILTER, q: all, per_page: limit, sort: '-date',
   });
-
-  return response.postSearch?.data || [];
+  return response.data;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -254,26 +181,35 @@ export const POST: APIRoute = async ({ request }) => {
     const { imageWidth, imageHeight } = parseImageSize(body);
     const artistQueries = artists.length > 0 ? artists : ['recent'];
 
-    const batches = await Promise.all(
-      artistQueries.map(async (artist) => {
-        const posts = await runSearch(
-          artist === 'recent' ? undefined : artist,
-          IMAGES_PER_ARTIST,
-          imageWidth,
-          imageHeight
-        );
-        return extractGalleryItems(posts, artist, allowedArtistKeys);
-      })
-    );
+    const batches = await concurrentMap(artistQueries, 4, async (artist) => ({
+      artist,
+      posts: await runSearch(artists.length === 0 ? undefined : artist,
+        artists.length === 0 ? FALLBACK_LIMIT : POSTS_PER_ARTIST),
+    }));
 
-    let galleryItems = batches.flat();
-
-    if (galleryItems.length < 12 && artists.length === 0) {
-      const fallbackPosts = await runSearch(undefined, FALLBACK_LIMIT, imageWidth, imageHeight);
-      galleryItems = galleryItems.concat(
-        extractGalleryItems(fallbackPosts, 'recent', allowedArtistKeys)
-      );
+    // Lists have only a thumbnail. Pick a bounded, balanced set of albums
+    // before loading their galleries, with no more than four requests in flight.
+    const candidates = new Map<string, { slug: string; artist: string }>();
+    for (let index = 0; index < FALLBACK_LIMIT && candidates.size < MAX_IMAGES; index++) {
+      for (const batch of batches) {
+        const post = batch.posts[index];
+        if (!post || (allowedArtistKeys.size > 0 &&
+          !post.artists?.some((artist) => allowedArtistKeys.has(normalizeArtistKey(artist.name))) &&
+          !allowedArtistKeys.has(normalizeArtistKey(post.title)))) continue;
+        candidates.set(post.slug, { slug: post.slug, artist: batch.artist });
+        if (candidates.size === MAX_IMAGES) break;
+      }
     }
+    const details = await concurrentMap([...candidates.values()], 4, async ({ slug, artist }) => {
+      try {
+        const { data } = await wannabesApi.getPost(slug, PHOTOGRAPHER_FILTER);
+        return extractGalleryItems([data], artist, allowedArtistKeys);
+      } catch (error) {
+        if (error instanceof WannabesHttpError && error.status === 404) return [];
+        throw error;
+      }
+    });
+    const galleryItems = details.flat();
 
     const diversified = diversifyByShow(galleryItems);
 

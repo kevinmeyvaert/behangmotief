@@ -8,9 +8,8 @@ import RelatedContentSection from '@/components/RelatedContentSection.astro';
 import Header from '@/components/Header.astro';
 import StructuredData from '@/components/StructuredData.astro';
 import { formatPostDate } from '@/lib/date';
-import { ImageUrlBuilder } from '@/lib/image-url-builder';
 import { getImageGallerySchema } from '@/lib/site-metadata';
-import { UpstreamUnavailableError } from '@/lib/graphql-client';
+import { UpstreamUnavailableError } from '@/lib/rest-client';
 import { serviceUnavailable } from '@/lib/http';
 
 // Cached at the edge rather than via the adapter's ISR option: ISR keys on path
@@ -84,7 +83,7 @@ const imageGallerySchema = getImageGallerySchema(
     artist: post.artist.name,
     venue: post.venue.name,
     images: post.images.slice(0, 10).map((img) => ({
-      url: ImageUrlBuilder.hero(img.hires),
+      url: img.url,
       alt: `${post.artist.name} at ${post.venue.name}`,
       width: img.dimensions?.width || 1920,
       height: img.dimensions?.height || 1280,
@@ -135,13 +134,13 @@ const imageGallerySchema = getImageGallerySchema(
                 }}
                 data-album-image-trigger
                 data-image-id={image.id}
-                data-full-image={ImageUrlBuilder.hero(image.hires)}
+                data-full-image={image.url}
                 data-blurhash={image.blurhash}
                 data-width={image.dimensions?.width || 800}
                 data-height={image.dimensions?.height || 800}
               >
                 <BlurHashImage
-                  src={ImageUrlBuilder.square(image.hires, 500)}
+                  src={image.thumbnailUrl}
                   alt={`${post.artist.name} at ${post.venue.name}`}
                   width={500}
                   height={500}

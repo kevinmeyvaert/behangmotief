@@ -1,12 +1,11 @@
 ---
 import BaseLightbox, { type LightboxImage } from './BaseLightbox.astro';
-import { ImageUrlBuilder } from '@/lib/image-url-builder';
 
 interface Props {
   images: Array<{
     id: string;
     blurhash: string;
-    hires: string;
+    url: string;
     dimensions?: {
       width: number;
       height: number;
@@ -21,7 +20,7 @@ const { images, artistName, venueName } = Astro.props;
 // Transform images for the lightbox
 const lightboxImages: LightboxImage[] = images.map(image => ({
   id: image.id,
-  url: ImageUrlBuilder.hero(image.hires),
+  url: image.url,
   alt: `${artistName} at ${venueName}`,
   blurhash: image.blurhash,
   width: image.dimensions?.width,

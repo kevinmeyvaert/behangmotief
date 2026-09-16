@@ -1,5 +1,5 @@
 import { albumsService } from '@/services/albums.service';
-import { UpstreamUnavailableError } from '@/lib/graphql-client';
+import { UpstreamUnavailableError } from '@/lib/rest-client';
 
 export const POSTS_PER_PAGE = 15;
 

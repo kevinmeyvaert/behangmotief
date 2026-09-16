@@ -1,6 +1,5 @@
 ---
 import { getLangFromUrl, useTranslatedPath } from '@/i18n/utils';
-import { checkThumbnails } from '../lib/ownThumbnail';
 import { formatPostDate } from '@/lib/date';
 import BlurHashImage from './BlurHashImage.astro';
 import type { ui } from '@/i18n/ui';
@@ -22,7 +21,6 @@ const translatePath = useTranslatedPath(lang);
 const albumBasePath = `${translatePath('/album')}/`;
 const filteredPosts = relatedPosts
   .filter((p) => p.id !== postId)
-  .map(checkThumbnails)
   .slice(0, 4);
 ---
 
@@ -42,7 +40,7 @@ const filteredPosts = relatedPosts
           >
             <BlurHashImage
               blurhash={post.thumbnail.blurhash}
-              src={`https://images.wannabes.be/S=W750,H750,PD1/${post.thumbnail.hires}`}
+              src={post.thumbnail.url}
               alt={`${post.artist.name} at ${post.venue.name}`}
               width={post.thumbnail.dimensions.width}
               height={post.thumbnail.dimensions.height}

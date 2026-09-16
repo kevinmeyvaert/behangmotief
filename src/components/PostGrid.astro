@@ -3,8 +3,6 @@ import { getLangFromUrl, useTranslatedPath } from '@/i18n/utils';
 import BlurHashImage from './BlurHashImage.astro';
 import MasonryGrid from './MasonryGrid.astro';
 import { formatPostDate } from '@/lib/date';
-import { checkThumbnails } from '@/lib/ownThumbnail';
-import { ImageUrlBuilder } from '@/lib/image-url-builder';
 import type { AlbumPost } from '@/types/components';
 
 interface Props {
@@ -21,7 +19,7 @@ const albumBasePath = `${translatePath('/album')}/`;
 
 <MasonryGrid>
   {
-    posts.map(checkThumbnails).map((post, index) => {
+    posts.map((post, index) => {
       return (
         <a
           href={`${albumBasePath}${post.slug}/`}
@@ -36,7 +34,7 @@ const albumBasePath = `${translatePath('/album')}/`;
           >
             <BlurHashImage
               blurhash={post.thumbnail.blurhash}
-              src={ImageUrlBuilder.build(post.thumbnail.hires, { width: 750, height: 750 })}
+              src={post.thumbnail.url}
               alt={`${post.artist.name} at ${post.venue.name}`}
               width={post.thumbnail.dimensions.width}
               height={post.thumbnail.dimensions.height}
