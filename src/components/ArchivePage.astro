@@ -17,7 +17,11 @@ interface Props {
 
 const { locale, archive } = Astro.props;
 
-Astro.response.headers.set('Cache-Control', 'private, no-store, max-age=0');
+// An outage page must not be cached; everything else is shared at the edge.
+Astro.response.headers.set(
+  'Cache-Control',
+  archive ? 'public, s-maxage=300, stale-while-revalidate=86400' : 'no-store'
+);
 
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
