@@ -444,18 +444,17 @@ const description =
         const sessionId = window.posthog?.get_session_id?.() || null;
         const distinctId = window.posthog?.get_distinct_id?.() || null;
 
-        const payload = await fetchJsonWithErrors('/api/gallery-images', {
-          method: 'POST',
+        const params = new URLSearchParams({
+          imageWidth: String(profile.textureWidth),
+          imageHeight: String(profile.textureHeight),
+        });
+        for (const name of artistNames) params.append('artist', name);
+
+        const payload = await fetchJsonWithErrors(`/api/gallery-images?${params}`, {
           headers: {
-            'content-type': 'application/json',
             'X-PostHog-Session-Id': sessionId || '',
             'X-PostHog-Distinct-Id': distinctId || '',
           },
-          body: JSON.stringify({
-            artists: artistNames,
-            imageWidth: profile.textureWidth,
-            imageHeight: profile.textureHeight,
-          }),
         });
 
         return Array.isArray(payload?.images) ? payload.images : [];

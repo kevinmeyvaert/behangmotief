@@ -173,9 +173,14 @@ async function runSearch(all: string | undefined, limit: number) {
   return response.data;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+// GET so the edge can cache it: the same artists and size give the same gallery.
+export const GET: APIRoute = async ({ request, url }) => {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = {
+      artists: url.searchParams.getAll('artist'),
+      imageWidth: url.searchParams.get('imageWidth') ?? undefined,
+      imageHeight: url.searchParams.get('imageHeight') ?? undefined,
+    };
     const artists = parseArtistInput(body);
     const allowedArtistKeys = new Set(artists.map(normalizeArtistKey));
     const { imageWidth, imageHeight } = parseImageSize(body);
@@ -241,7 +246,7 @@ export const POST: APIRoute = async ({ request }) => {
       {
         headers: {
           'content-type': 'application/json; charset=utf-8',
-          'cache-control': 'no-store',
+          'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400',
         },
         status: 200,
       }
