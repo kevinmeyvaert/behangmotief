@@ -450,7 +450,7 @@ const description =
         });
         for (const name of artistNames) params.append('artist', name);
 
-        const payload = await fetchJsonWithErrors(`/api/gallery-images?${params}`, {
+        const payload = await fetchJsonWithErrors(`/api/gallery-images/?${params}`, {
           headers: {
             'X-PostHog-Session-Id': sessionId || '',
             'X-PostHog-Distinct-Id': distinctId || '',
@@ -608,7 +608,7 @@ const description =
       }
 
       function toProxyImageUrl(sourceUrl) {
-        return `/api/gallery-image?url=${encodeURIComponent(sourceUrl)}`;
+        return `/api/gallery-image/?url=${encodeURIComponent(sourceUrl)}`;
       }
 
       function initializeThreeScene(images, profile) {
