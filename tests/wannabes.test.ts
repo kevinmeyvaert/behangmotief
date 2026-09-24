@@ -155,3 +155,17 @@ test('media URLs resolve to stored medium and large sizes, leaving square thumbs
   assert.equal(ImageUrlBuilder.mediaSize('https://media.wannabes.be/42/conversions/a-thumb.jpg?v=1', 'large'), null);
   assert.equal(ImageUrlBuilder.mediaSize('https://images.wannabes.be/S=W750/a.jpg', 'large'), null);
 });
+
+test('cached clients share one upstream call per request and never cache failures', async () => {
+  let calls = 0;
+  const client = createWannabesClient({
+    baseUrl: 'https://wannabes.test/api/v1', apiKey: 'test-secret', cacheTtlMs: 60_000,
+    fetch: (async () => (++calls === 1 ? new Response(null, { status: 500 }) : Response.json(page()))) as typeof fetch,
+  });
+  await assert.rejects(client.listPosts({ page: 2 }), UpstreamUnavailableError);
+  await Promise.all([client.listPosts({ page: 2 }), client.listPosts({ page: 2 })]);
+  await client.listPosts({ page: 2 });
+  assert.equal(calls, 2);
+  await client.listPosts({ page: 3 });
+  assert.equal(calls, 3);
+});

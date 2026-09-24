@@ -25,11 +25,31 @@ interface ClientOptions {
   apiKey?: string;
   timeoutMs?: number;
   fetch?: typeof fetch;
+  /** Reuse successful responses within a warm server instance. */
+  cacheTtlMs?: number;
 }
+
+const MAX_CACHE_ENTRIES = 500;
 
 /** Server/build only. Never forward upstream bodies or credentials in errors. */
 export function createWannabesClient(options: ClientOptions) {
-  async function get<T>(path: string, params: PostFilters = {}, allowNotFound = false): Promise<T> {
+  const cache = new Map<string, { expires: number; value: Promise<unknown> }>();
+
+  function get<T>(path: string, params: PostFilters = {}, allowNotFound = false): Promise<T> {
+    if (!options.cacheTtlMs) return request<T>(path, params, allowNotFound);
+    const key = `${path}?${JSON.stringify(params)}`;
+    const hit = cache.get(key);
+    if (hit && hit.expires > Date.now()) return hit.value as Promise<T>;
+    cache.delete(key);
+    if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
+    // Caching the promise lets concurrent renders share one upstream call.
+    const value = request<T>(path, params, allowNotFound);
+    cache.set(key, { expires: Date.now() + options.cacheTtlMs, value });
+    value.catch(() => cache.delete(key));
+    return value;
+  }
+
+  async function request<T>(path: string, params: PostFilters, allowNotFound: boolean): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 6000);
     try {
