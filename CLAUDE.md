@@ -50,7 +50,7 @@ npm run check        # Astro diagnostics
 - Resource types: `src/types/wannabes.types.ts`
 - Client: `src/lib/rest-client.ts`; server configuration: `src/lib/wannabes-api.ts`
 - View models: `src/lib/album-mapper.ts`
-- Filter every portfolio request by `kevin-meyvaert`; image requests also use `only_photographer_images=1`
+- Filter every portfolio request by `behangmotief`; image requests also use `only_photographer_images=1`
 - Lists contain thumbnails; details add `photos`. Use API image-size URLs directly.
 
 ### Path Aliases

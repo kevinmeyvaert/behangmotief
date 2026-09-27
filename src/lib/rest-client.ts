@@ -1,6 +1,6 @@
 import type { PaginatedResponse, PostDetailResource, PostFilters, PostResource, ResourceResponse } from '../types/wannabes.types';
 
-export const PHOTOGRAPHER_SLUG = 'kevin-meyvaert';
+export const PHOTOGRAPHER_SLUG = 'behangmotief';
 export const PHOTOGRAPHER_FILTER = {
   photographer: PHOTOGRAPHER_SLUG,
   only_photographer_images: true,

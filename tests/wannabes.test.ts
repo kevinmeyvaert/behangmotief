@@ -9,7 +9,7 @@ import type { ImageResource, PostDetailResource, PostResource } from '../src/typ
 
 const photo: ImageResource = {
   id: 42, blurhash: 'LCIyg^01~9j0~9DkF^NaAc9tJ-={', width: '1800', height: '1200', is_main: true,
-  photographer: { id: 9, name: 'Kevin Meyvaert', first_name: 'Kevin', slug: 'kevin-meyvaert' },
+  photographer: { id: 9, name: 'Kevin Meyvaert', first_name: 'Kevin', slug: 'behangmotief' },
   sizes: {
     large: { url: 'https://media.wannabes.be/42/large.jpg?v=1', avif_url: null, width: 1600, height: null },
     thumb: { url: 'https://media.wannabes.be/42/thumb.jpg?v=1', avif_url: null, width: 800, height: 800 },
@@ -40,7 +40,7 @@ test('archive translates offsets/search into REST pagination with private bearer
     assert.equal(url.searchParams.get('page'), '2');
     assert.equal(url.searchParams.get('per_page'), '15');
     assert.equal(url.searchParams.get('q'), 'Artist & Festival');
-    assert.equal(url.searchParams.get('photographer'), 'kevin-meyvaert');
+    assert.equal(url.searchParams.get('photographer'), 'behangmotief');
     assert.equal(url.searchParams.get('only_photographer_images'), '1');
     assert.equal(new Headers(init?.headers).get('Authorization'), 'Bearer test-secret');
     assert.equal(init?.redirect, 'error');
@@ -122,7 +122,7 @@ test('related filters are skipped when absent and exclude the current slug', asy
     assert.equal(url.searchParams.get('venue'), null);
     assert.equal(url.searchParams.get('exclude'), post.slug);
     assert.equal(url.searchParams.get('sort'), 'random');
-    assert.equal(url.searchParams.get('photographer'), 'kevin-meyvaert');
+    assert.equal(url.searchParams.get('photographer'), 'behangmotief');
     return Response.json(page());
   }));
   assert.deepEqual(await service.getRelatedAlbums({}), { sameArtist: [], sameVenue: [] });
