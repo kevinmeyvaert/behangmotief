@@ -29,10 +29,7 @@ const archivePath = `${translatePath('/archive')}/`;
 // Join the slug array into a path string
 const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
 if (!slugPath) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Not found',
-  });
+  return Astro.rewrite(`/${lang}/404/`);
 }
 
 // Fetch the album data using the service
@@ -46,10 +43,7 @@ try {
   throw error;
 }
 if (!post) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Not found',
-  });
+  return Astro.rewrite(`/${lang}/404/`);
 }
 
 const descriptionTemplates = t('album.descriptions') as string[];

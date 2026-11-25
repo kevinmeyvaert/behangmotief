@@ -1,0 +1,9 @@
+---
+import { getLangFromUrl } from '@/i18n/utils';
+
+export const prerender = false;
+
+// Hand off to the localized page so the header and footer match the URL's language.
+const lang = getLangFromUrl(new URL(Astro.originPathname, Astro.url));
+return Astro.rewrite(`/${lang}/404/`);
+---

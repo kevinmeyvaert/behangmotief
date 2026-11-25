@@ -1,0 +1,28 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import { getLangFromUrl, useTranslatedPath, useTranslations } from '@/i18n/utils';
+
+export const prerender = false;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+
+Astro.response.status = 404;
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300');
+---
+
+<Layout title={t('notfound.title')} description={t('notfound.message')} locale={lang} noindex>
+  <Header />
+  <main class="container mx-auto px-4 md:px-0 py-32 text-center">
+    <h1 class="text-3xl font-bold mb-4">{t('notfound.title')}</h1>
+    <p class="text-gray-600 max-w-md mx-auto mb-8">{t('notfound.message')}</p>
+    <a
+      href={`${translatePath('/archive')}/`}
+      class="inline-block bg-black text-white px-6 py-3 text-md font-semibold hover:bg-gray-800 transition-colors rounded-lg"
+    >
+      {t('notfound.cta')}
+    </a>
+  </main>
+</Layout>

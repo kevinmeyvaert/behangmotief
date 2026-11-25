@@ -20,6 +20,9 @@ export const common = {
     "recent.work": "Recent Work",
     "search.placeholder": "Search artist, venue, or festival...",
     "search.button.aria": "Search",
+    "notfound.title": "Page not found",
+    "notfound.message": "This page doesn't exist (anymore). Browse the archive to find the photos you're looking for.",
+    "notfound.cta": "Go to the archive",
   },
   nl: {
     "portfolio.title": "Uitgelicht werk",
@@ -42,5 +45,8 @@ export const common = {
     "recent.work": "Recent Werk",
     "search.placeholder": "Zoek artiest, locatie of festival...",
     "search.button.aria": "Zoeken",
+    "notfound.title": "Pagina niet gevonden",
+    "notfound.message": "Deze pagina bestaat niet (meer). Blader door het archief om de foto's te vinden die je zoekt.",
+    "notfound.cta": "Naar het archief",
   },
 };
