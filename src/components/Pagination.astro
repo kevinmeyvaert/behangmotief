@@ -1,12 +1,10 @@
 ---
 import { getLangFromUrl, useTranslations } from '@/i18n/utils';
-import { ui } from '../i18n/ui';
 
 interface Props {
   currentPage: number;
   totalPages: number;
   baseUrl: string;
-  lang?: keyof typeof ui;
 }
 
 const { currentPage, totalPages, baseUrl } = Astro.props;

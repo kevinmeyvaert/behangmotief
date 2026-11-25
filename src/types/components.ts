@@ -18,7 +18,6 @@ export interface AlbumPost {
 }
 
 export interface AlbumDetail extends AlbumPost {
-  url: string;
   images: AlbumImage[];
   coverImage?: string;
 }

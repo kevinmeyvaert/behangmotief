@@ -128,10 +128,6 @@ const imageGallerySchema = getImageGallerySchema(
                 }}
                 data-album-image-trigger
                 data-image-id={image.id}
-                data-full-image={image.url}
-                data-blurhash={image.blurhash}
-                data-width={image.dimensions?.width || 800}
-                data-height={image.dimensions?.height || 800}
               >
                 <BlurHashImage
                   src={image.thumbnailUrl}
@@ -154,7 +150,7 @@ const imageGallerySchema = getImageGallerySchema(
       </section>
       <RelatedContentSection
         server:defer
-        post={{ id: post.id, slug: post.slug, artist: post.artist, venue: post.venue }}
+        post={{ slug: post.slug, artist: post.artist, venue: post.venue }}
         locale={lang}
       />
     </article>

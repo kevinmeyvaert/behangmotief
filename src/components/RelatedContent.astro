@@ -8,20 +8,16 @@ import type { AlbumPost } from '@/types/components';
 interface Props {
   relatedPosts: AlbumPost[];
   title: string;
-  postId: string;
   className?: string;
   type: 'artist' | 'venue';
   locale?: keyof typeof ui;
 }
 
-const { relatedPosts, title, postId, className = '', type, locale } = Astro.props;
+const { relatedPosts, title, className = '', type, locale } = Astro.props;
 // Use passed locale or try to detect from URL
 const lang = locale || getLangFromUrl(Astro.url);
 const translatePath = useTranslatedPath(lang);
 const albumBasePath = `${translatePath('/album')}/`;
-const filteredPosts = relatedPosts
-  .filter((p) => p.id !== postId)
-  .slice(0, 4);
 ---
 
 <section class:list={['container', className]}>
@@ -30,7 +26,7 @@ const filteredPosts = relatedPosts
     class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
   >
     {
-      filteredPosts.map((post) => (
+      relatedPosts.map((post) => (
         <a href={`${albumBasePath}${post.slug}/`} class="group">
           <article
             class="relative overflow-hidden"

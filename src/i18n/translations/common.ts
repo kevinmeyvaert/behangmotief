@@ -4,7 +4,6 @@ export const common = {
     "collaborate.title": "Let's Collaborate",
     "collaborate.description":
       "Ready to capture your next event or create stunning portraits? Get in touch to discuss your project.",
-    "collaborate.cta": "Contact Me",
     "footer.about.title": "Behangmotief",
     "footer.about.bio":
       "Kevin Meyvaert is a Belgian freelance music & festival photographer based in Gent. Part of Wannabes, a rockphotography collective.",
@@ -29,7 +28,6 @@ export const common = {
     "collaborate.title": "Laten we samenwerken",
     "collaborate.description":
       "Klaar om je volgende evenement vast te leggen of prachtige portretten te creëren? Neem contact op om je project te bespreken.",
-    "collaborate.cta": "Contacteer me",
     "footer.about.title": "Behangmotief",
     "footer.about.bio":
       "Kevin Meyvaert is een Belgische freelance muziek- en festivalfotograaf gevestigd in Gent. Deel van Wannabes, een rockfotografie collectief.",

@@ -1,8 +1,5 @@
 export const album = {
   en: {
-    "album.title": "Album | Behangmotief — Music & festival photographer",
-    "album.description":
-      "View all photos from an album. Go through my archive of over 6 years of music photography.",
     "album.descriptions": [
       "Explore an electrifying collection of live photos capturing {artist}'s unforgettable performance at {venue}. Taken by Behangmotief, a music photographer known for vibrant, high-energy shots.",
       "Experience the energy and excitement of {artist} live at {venue} through this exclusive photo collection by Behangmotief, capturing every thrilling moment of the performance.",
@@ -23,9 +20,6 @@ export const album = {
     "album.more_at_venue": "Same venue: {venue}",
   },
   nl: {
-    "album.title": "Album | Behangmotief — Muziek & festivalfotograaf",
-    "album.description":
-      "Bekijk alle foto's uit een album. Doorloop mijn archief van meer dan 6 jaar muziekfotografie.",
     "album.descriptions": [
       "Ontdek een opwindende collectie live foto's die {artist}'s onvergetelijke optreden bij {venue} vastleggen. Genomen door Behangmotief, een muziekfotograaf bekend om levendige, energieke foto's.",
       "Ervaar de energie en opwinding van {artist} live bij {venue} via deze exclusieve fotocollectie van Behangmotief, die elk spannend moment van het optreden vastlegt.",

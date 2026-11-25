@@ -7,7 +7,7 @@ import { albumsService } from '@/services/albums.service';
 
 interface Props {
   // Island props travel in the URL; past 2 KB Astro switches to an uncacheable POST.
-  post: Pick<AlbumPost, 'id' | 'slug' | 'artist' | 'venue'>;
+  post: Pick<AlbumPost, 'slug' | 'artist' | 'venue'>;
   locale?: keyof typeof ui;
 }
 
@@ -50,7 +50,6 @@ const t = useTranslations(lang);
             '{artist}',
             post.artist.name
           )}
-          postId={post.id}
           type="artist"
           className="mb-12"
           locale={lang}
@@ -62,7 +61,6 @@ const t = useTranslations(lang);
         <RelatedContent
           relatedPosts={sameVenue}
           title={t('album.more_at_venue').replace('{venue}', post.venue.name)}
-          postId={post.id}
           type="venue"
           className="mb-12"
           locale={lang}

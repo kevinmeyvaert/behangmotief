@@ -9,12 +9,10 @@ export const routes = {
   nl: {
     archive: "archief",
     album: "album",
-    grid: "het-motief",
   },
   en: {
     archive: "archive",
     album: "album",
-    grid: "grid",
   },
 };
 

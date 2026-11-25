@@ -36,7 +36,7 @@ export class AlbumsService {
       const images = data.photos.map(mapImage).filter((image) => image !== null);
       const post = mapPost(data);
       if (!post || !images.length) return null;
-      return { ...post, url: data.url, images, coverImage: post.thumbnail.url };
+      return { ...post, images, coverImage: post.thumbnail.url };
     } catch (error) {
       if (error instanceof WannabesHttpError && error.status === 404) return null;
       throw error;
