@@ -51,7 +51,9 @@ const isArchiveActive =
   <button
     id="mobile-menu-button"
     class="md:hidden"
-    aria-label="Toggle mobile menu"
+    aria-label={t('nav.menu.open')}
+    aria-controls="mobile-menu"
+    aria-expanded="false"
   >
     <svg
       class={`w-8 h-8 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
@@ -68,9 +70,10 @@ const isArchiveActive =
   </button>
 
   <!-- Mobile Menu -->
-  <div
+  <dialog
     id="mobile-menu"
-    class="hidden fixed inset-0 z-50 md:hidden"
+    aria-label={t('nav.menu')}
+    class="md:hidden m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent backdrop:bg-transparent"
   >
     <div
       class={`fixed inset-0 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'} p-6 transform transition-transform duration-300 translate-x-full`}
@@ -78,7 +81,7 @@ const isArchiveActive =
       <button
         id="close-menu-button"
         class="absolute top-6 right-6"
-        aria-label="Close mobile menu"
+        aria-label={t('nav.menu.close')}
       >
         <svg
           class={`w-8 h-8 ${theme === 'dark' ? 'text-white' : 'text-black'}`}
@@ -113,39 +116,42 @@ const isArchiveActive =
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 </nav>
 
 <script>
-  const mobileMenuButton = document.getElementById('mobile-menu-button');
-  const closeMenuButton = document.getElementById('close-menu-button');
-  const mobileMenu = document.getElementById('mobile-menu');
-  const mobileMenuContent = mobileMenu?.querySelector('div');
-  const htmlElement = document.documentElement;
-  const bodyElement = document.body;
+  const openButton = document.getElementById('mobile-menu-button');
+  const closeButton = document.getElementById('close-menu-button');
+  const menu = document.getElementById('mobile-menu');
+  const panel = menu?.querySelector('div');
 
-  const toggleMenu = () => {
-    if (mobileMenu?.classList.contains('hidden')) {
-      // Open menu
-      mobileMenu.classList.remove('hidden');
-      // Prevent background scrolling
-      htmlElement.style.overflow = 'hidden';
-      bodyElement.style.overflow = 'hidden';
-      setTimeout(() => {
-        mobileMenuContent?.classList.remove('translate-x-full');
-      }, 10);
-    } else {
-      // Close menu
-      mobileMenuContent?.classList.add('translate-x-full');
-      // Re-enable scrolling
-      htmlElement.style.overflow = '';
-      bodyElement.style.overflow = '';
-      setTimeout(() => {
-        mobileMenu?.classList.add('hidden');
-      }, 300);
-    }
-  };
+  if (openButton && closeButton && menu instanceof HTMLDialogElement && panel) {
+    const SLIDE_MS = 300;
+    const setScrollLock = (locked: boolean) => {
+      document.documentElement.style.overflow = locked ? 'hidden' : '';
+      document.body.style.overflow = locked ? 'hidden' : '';
+    };
 
-  mobileMenuButton?.addEventListener('click', toggleMenu);
-  closeMenuButton?.addEventListener('click', toggleMenu);
+    // showModal traps focus, makes the page behind inert and closes on Escape.
+    const openMenu = () => {
+      menu.showModal();
+      openButton.setAttribute('aria-expanded', 'true');
+      setScrollLock(true);
+      requestAnimationFrame(() => panel.classList.remove('translate-x-full'));
+    };
+
+    const closeMenu = () => {
+      panel.classList.add('translate-x-full');
+      openButton.setAttribute('aria-expanded', 'false');
+      setScrollLock(false);
+      setTimeout(() => menu.close(), SLIDE_MS);
+    };
+
+    openButton.addEventListener('click', openMenu);
+    closeButton.addEventListener('click', closeMenu);
+    menu.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeMenu();
+    });
+  }
 </script>
