@@ -5,6 +5,7 @@ import {
   useTranslations,
 } from '../i18n/utils';
 import LanguagePicker from './LanguagePicker.astro';
+import { withTrailingSlash } from '@/lib/url';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -16,13 +17,9 @@ interface Props {
 const { theme = 'light' } = Astro.props;
 const currentPath = new URL(Astro.request.url).pathname;
 const translatePath = useTranslatedPath(lang);
-const withTrailingSlash = (value: string) => {
-  if (value === '/') return value;
-  return value.endsWith('/') ? value : `${value}/`;
-};
 const homePath = `/${lang}/`;
-const archivePath = withTrailingSlash(translatePath('archive'));
-const albumPath = withTrailingSlash(translatePath('album'));
+const archivePath = translatePath('archive');
+const albumPath = translatePath('album');
 const normalizedCurrentPath = withTrailingSlash(currentPath);
 
 const isHomeActive = normalizedCurrentPath === homePath;

@@ -33,7 +33,7 @@ const pagination = archive?.pagination ?? { start: 0, limit: POSTS_PER_PAGE, tot
 const upstreamDown = archive === null;
 
 const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
-const archiveRoute = `${translatePath('/archive')}/`;
+const archiveRoute = translatePath('/archive');
 const collectionPageSchema = getCollectionPageSchema(locale);
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.behangmotief.be';
 const canonicalArchiveUrl = `${siteUrl}${archiveRoute}`;

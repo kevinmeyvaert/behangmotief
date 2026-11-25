@@ -1,4 +1,5 @@
 import { ui, defaultLang, routes } from './ui';
+import { withTrailingSlash } from '@/lib/url';
 
 type Language = keyof typeof ui;
 type TranslationDictionary = (typeof ui)[typeof defaultLang];
@@ -30,17 +31,13 @@ export function useTranslatedPath(lang: Language) {
       ? '/' + routes[l][pathName as keyof (typeof routes)[Language]]
       : path;
 
-    return `/${l}${translatedPath}`;
+    return withTrailingSlash(`/${l}${translatedPath}`);
   };
 }
 
 export function getAlternateUrls(url: URL, siteUrl: string) {
   const currentLang = getLangFromUrl(url);
   const pathname = url.pathname;
-  const withTrailingSlash = (value: string) => {
-    if (value === '/') return value;
-    return value.endsWith('/') ? value : `${value}/`;
-  };
 
   // Remove the current locale from the pathname
   const pathWithoutLocale = pathname.replace(`/${currentLang}`, '');

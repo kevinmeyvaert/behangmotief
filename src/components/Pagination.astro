@@ -1,5 +1,6 @@
 ---
 import { getLangFromUrl, useTranslations } from '@/i18n/utils';
+import { withTrailingSlash } from '@/lib/url';
 
 interface Props {
   currentPage: number;
@@ -12,7 +13,7 @@ const { currentPage, totalPages, baseUrl } = Astro.props;
 // Don't render pagination if there's only one page
 if (totalPages <= 1) return null;
 
-const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+const normalizedBaseUrl = withTrailingSlash(baseUrl);
 
 const prevPage = currentPage > 1 ? currentPage - 1 : null;
 const nextPage = currentPage < totalPages ? currentPage + 1 : null;

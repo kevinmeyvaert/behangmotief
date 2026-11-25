@@ -1,6 +1,7 @@
 ---
 import { getLangFromUrl } from '@/i18n/utils';
 import { languages, routes } from '../i18n/ui';
+import { withTrailingSlash } from '@/lib/url';
 
 interface Props {
   theme?: 'light' | 'dark';
@@ -32,10 +33,6 @@ if (currentSegment) {
 // Get language codes array for positioning
 const langCodes = Object.keys(languages);
 const activeIndex = langCodes.indexOf(lang);
-const withTrailingSlash = (value: string) => {
-  if (value === '/') return value;
-  return value.endsWith('/') ? value : `${value}/`;
-};
 ---
 
 <style>

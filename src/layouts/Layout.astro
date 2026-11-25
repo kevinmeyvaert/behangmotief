@@ -8,6 +8,7 @@ import '../styles/global.css';
 import { getAlternateUrls, localeToHreflang } from '@/i18n/utils';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_TYPE, OG_IMAGE_WIDTH, ogImageUrl } from '@/lib/og';
 import { defaultLang } from '@/i18n/ui';
+import { withTrailingSlash } from '@/lib/url';
 import {
   getPersonSchema,
   getOrganizationSchema,
@@ -45,13 +46,7 @@ const alternateUrls = getAlternateUrls(Astro.url, siteUrl);
 
 // Generate base structured data for all pages
 const lang = locale.split('-')[0] as 'nl' | 'en';
-const normalizePathname = (pathname: string) => {
-  if (pathname === '/') return '/';
-  return pathname.endsWith('/') ? pathname : `${pathname}/`;
-};
-
-const normalizedPathname = normalizePathname(Astro.url.pathname);
-const defaultCanonicalUrl = `${siteUrl}${normalizedPathname}`;
+const defaultCanonicalUrl = `${siteUrl}${withTrailingSlash(Astro.url.pathname)}`;
 const resolvedCanonicalUrl = canonicalUrl
   ? new URL(canonicalUrl, siteUrl).toString()
   : defaultCanonicalUrl;

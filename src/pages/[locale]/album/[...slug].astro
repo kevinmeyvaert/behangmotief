@@ -24,7 +24,7 @@ const { slug } = Astro.params;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
-const archivePath = `${translatePath('/archive')}/`;
+const archivePath = translatePath('/archive');
 
 // Join the slug array into a path string
 const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
@@ -186,12 +186,12 @@ const imageGallerySchema = getImageGallerySchema(
     });
   </script>
   <script>
+    import { withTrailingSlash } from '@/lib/url';
+
     const backLink = document.querySelector('[data-back-link]');
 
     if (backLink instanceof HTMLAnchorElement) {
       const archiveRoot = backLink.dataset.archiveRoot || '/';
-      const withTrailingSlash = (value: string) =>
-        value.endsWith('/') ? value : `${value}/`;
       const normalizedArchiveRoot = withTrailingSlash(archiveRoot);
       const toArchivePath = (candidate: string | null) => {
         if (!candidate) return null;

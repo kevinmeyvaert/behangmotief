@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { title, imageUrl, searchTerm, translatePath, blurhash } = Astro.props;
-const archivePath = `${translatePath('/archive')}/`;
+const archivePath = translatePath('/archive');
 ---
 
 <a

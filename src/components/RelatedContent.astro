@@ -17,7 +17,7 @@ const { relatedPosts, title, className = '', type, locale } = Astro.props;
 // Use passed locale or try to detect from URL
 const lang = locale || getLangFromUrl(Astro.url);
 const translatePath = useTranslatedPath(lang);
-const albumBasePath = `${translatePath('/album')}/`;
+const albumBasePath = translatePath('/album');
 ---
 
 <section class:list={['container', className]}>
