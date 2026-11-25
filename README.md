@@ -164,8 +164,7 @@ API URL in production. The local `.test` hostname cannot be reached by Vercel.
 Album lists use `GET /posts` with `photographer=kevin-meyvaert` and
 `only_photographer_images=1`. Archive offsets map to REST `page`/`per_page`;
 search uses `q`. Album details use `GET /posts/{slug}` and its `photos` array.
-Related sets use artist/venue slugs and exclude the current album. The interactive
-gallery loads a bounded set of details with at most four requests in flight.
+Related sets use artist/venue slugs and exclude the current album.
 Sitemap generation walks all REST pages (100 sets per request).
 
 Resource types live in `src/types/wannabes.types.ts`; `album-mapper.ts` converts

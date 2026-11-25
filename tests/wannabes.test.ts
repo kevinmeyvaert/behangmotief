@@ -3,7 +3,6 @@ import { test } from 'node:test';
 import { createWannabesClient, UpstreamUnavailableError, WannabesHttpError } from '../src/lib/rest-client';
 import { mapImage, mapPost } from '../src/lib/album-mapper';
 import { AlbumsService } from '../src/services/albums.service';
-import { concurrentMap } from '../src/lib/concurrent-map';
 import { ImageUrlBuilder } from '../src/lib/image-url-builder';
 import type { ImageResource, PostDetailResource, PostResource } from '../src/types/wannabes.types';
 
@@ -130,19 +129,6 @@ test('related filters are skipped when absent and exclude the current slug', asy
   assert.equal(result.sameArtist.length, 1);
   assert.deepEqual(result.sameVenue, []);
   assert.equal(requests, 1);
-});
-
-test('gallery detail fan-out preserves order and limits concurrent requests', async () => {
-  let active = 0;
-  let peak = 0;
-  const result = await concurrentMap([1, 2, 3, 4, 5, 6], 2, async (value) => {
-    peak = Math.max(peak, ++active);
-    await new Promise((resolve) => setTimeout(resolve, 2));
-    active--;
-    return value * 2;
-  });
-  assert.deepEqual(result, [2, 4, 6, 8, 10, 12]);
-  assert.equal(peak, 2);
 });
 
 test('media URLs resolve to stored medium and large sizes, leaving square thumbs alone', () => {
