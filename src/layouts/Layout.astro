@@ -9,6 +9,7 @@ import { getAlternateUrls, localeToHreflang } from '@/i18n/utils';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_TYPE, OG_IMAGE_WIDTH, ogImageUrl } from '@/lib/og';
 import { defaultLang } from '@/i18n/ui';
 import { withTrailingSlash } from '@/lib/url';
+import { SITE_URL } from '@/lib/consts';
 import {
   getPersonSchema,
   getOrganizationSchema,
@@ -41,14 +42,13 @@ const {
   publishedTime,
   modifiedTime,
 } = Astro.props;
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.behangmotief.be';
-const alternateUrls = getAlternateUrls(Astro.url, siteUrl);
+const alternateUrls = getAlternateUrls(Astro.url, SITE_URL);
 
 // Generate base structured data for all pages
 const lang = locale.split('-')[0] as 'nl' | 'en';
-const defaultCanonicalUrl = `${siteUrl}${withTrailingSlash(Astro.url.pathname)}`;
+const defaultCanonicalUrl = `${SITE_URL}${withTrailingSlash(Astro.url.pathname)}`;
 const resolvedCanonicalUrl = canonicalUrl
-  ? new URL(canonicalUrl, siteUrl).toString()
+  ? new URL(canonicalUrl, SITE_URL).toString()
   : defaultCanonicalUrl;
 const robotsContent = noindex ? 'noindex,follow' : 'index,follow';
 const ogLocale = localeToHreflang[lang].replace('-', '_');
@@ -56,7 +56,7 @@ const ogLocaleAlternates = Object.values(localeToHreflang)
   .filter((value) => value !== localeToHreflang[lang])
   .map((value) => value.replace('-', '_'));
 const htmlLang = localeToHreflang[lang] || locale;
-const resolvedOgImage = new URL(ogImageUrl(ogImageSrc), siteUrl).toString();
+const resolvedOgImage = new URL(ogImageUrl(ogImageSrc), SITE_URL).toString();
 const resolvedOgImageAlt = ogImageAlt
   || (lang === 'nl'
     ? 'Behangmotief portfolio van muziek- en festivalfotografie'
@@ -64,7 +64,7 @@ const resolvedOgImageAlt = ogImageAlt
 // x-default is a per-page fallback, so it has to be this page's default-locale
 // URL — pointing every page at the homepage invalidates the hreflang cluster.
 const xDefaultUrl =
-  alternateUrls[localeToHreflang[defaultLang]] ?? `${siteUrl}/${defaultLang}/`;
+  alternateUrls[localeToHreflang[defaultLang]] ?? `${SITE_URL}/${defaultLang}/`;
 
 const baseStructuredData = [
   getPersonSchema(lang),

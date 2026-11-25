@@ -2,10 +2,11 @@
  * Centralized site metadata for SEO and Schema.org structured data
  */
 import { routes } from '@/i18n/ui';
+import { SITE_URL } from '@/lib/consts';
 
 const siteMetadata = {
   name: 'Behangmotief',
-  url: 'https://www.behangmotief.be',
+  url: SITE_URL,
   description: {
     nl: 'Professionele muziek- en festivalfotografie door Kevin Meyvaert. Gevestigd in Gent, België.',
     en: 'Professional music and festival photography by Kevin Meyvaert. Based in Gent, Belgium.',
@@ -71,20 +72,6 @@ const siteMetadata = {
   social: {
     instagram: 'https://instagram.com/behangmotief/',
   },
-
-  clients: [
-    'Democrazy',
-    'Crammerock',
-    'Studio Brussel',
-    'Cactusfestival',
-    'HEAR HEAR',
-    'Pukkelpop',
-    'Boomtown',
-    'Gladiolen',
-    'VI.BE',
-    'Gent Jazz',
-    'Muziekcentrum De Bijloke',
-  ],
 } as const;
 
 /**

@@ -6,8 +6,8 @@ import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
 import { loadEnv } from 'vite';
 import { createWannabesClient, PHOTOGRAPHER_SLUG } from './src/lib/rest-client';
+import { SITE_URL } from './src/lib/consts';
 
-const SITE_URL = 'https://www.behangmotief.be';
 const SITEMAP_PAGE_SIZE = 100;
 const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), 'WANNABES_');
 const api = createWannabesClient({

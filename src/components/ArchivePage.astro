@@ -35,8 +35,6 @@ const upstreamDown = archive === null;
 const totalPages = Math.ceil(total / POSTS_PER_PAGE);
 const archiveRoute = translatePath('/archive');
 const collectionPageSchema = getCollectionPageSchema(locale);
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.behangmotief.be';
-const canonicalArchiveUrl = `${siteUrl}${archiveRoute}`;
 const isFiltered = Boolean(searchParam);
 const isPaginated = currentPage > 1;
 ---
@@ -45,7 +43,7 @@ const isPaginated = currentPage > 1;
   title={t('archive.title')}
   description={t('archive.description')}
   locale={locale}
-  canonicalUrl={canonicalArchiveUrl}
+  canonicalUrl={archiveRoute}
   noindex={isFiltered || isPaginated}
 >
   <StructuredData slot="structured-data" schema={collectionPageSchema} />
@@ -83,34 +81,19 @@ const isPaginated = currentPage > 1;
 
 <script
   is:inline
-  type="application/json"
-  data-archive-meta
-  set:html={JSON.stringify({
-    currentPage,
-    totalPages,
-    searchTerm: searchParam,
-    albumCount: albums.length,
-    totalAlbums: total
-  })}
-/>
-<script is:inline>
-  // Track archive page view on load
+  define:vars={{
+    archiveViewed: {
+      current_page: currentPage,
+      total_pages: totalPages,
+      search_term: searchParam || null,
+      album_count: albums.length,
+      total_albums: total,
+      has_search: Boolean(searchParam),
+    },
+  }}
+>
+  // PostHog loads as a module, which runs before DOMContentLoaded.
   document.addEventListener('DOMContentLoaded', () => {
-    const metaEl = document.querySelector('[data-archive-meta]');
-    if (metaEl) {
-      try {
-        const meta = JSON.parse(metaEl.textContent || '{}');
-        window.posthog?.capture('archive_page_viewed', {
-          current_page: meta.currentPage,
-          total_pages: meta.totalPages,
-          search_term: meta.searchTerm || null,
-          album_count: meta.albumCount,
-          total_albums: meta.totalAlbums,
-          has_search: Boolean(meta.searchTerm)
-        });
-      } catch (e) {
-        // Silently fail if JSON parsing fails
-      }
-    }
+    window.posthog?.capture('archive_page_viewed', archiveViewed);
   });
 </script>

@@ -2,20 +2,7 @@
 // Images
 import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
-
-const referrals = [
-  'Democrazy',
-  'Crammerock',
-  'Studio Brussel',
-  'Cactusfestival',
-  'HEAR HEAR',
-  'Pukkelpop',
-  'Boomtown',
-  'Gladiolen',
-  'VI.BE',
-  'Gent Jazz',
-  'Muziekcentrum De Bijloke'
-];
+import { CLIENTS } from '@/lib/consts';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -47,7 +34,7 @@ const t = useTranslations(lang);
       </h3>
       <div class="flex flex-wrap gap-2 items-start mb-8">
         {
-          referrals.map((referral) => (
+          CLIENTS.map((referral) => (
             <span class="border px-2 py-1 rounded">{referral}</span>
           ))
         }
