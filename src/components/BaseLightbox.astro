@@ -134,294 +134,165 @@ const isGallery = images.length > 1;
   </div>
 </div>
 
-<script is:inline type="module">
-  // Try to import blurhash, but continue if it fails
-  let decode = null;
-  try {
-    const blurhashModule = await import('blurhash');
-    decode = blurhashModule.decode;
-  } catch (e) {
-    console.warn('Blurhash module not available, continuing without blur placeholders');
+<script>
+  import { decode } from 'blurhash';
+
+  interface LightboxConfig {
+    images: {
+      id?: string;
+      url: string;
+      alt: string;
+      blurhash?: string;
+      width?: number;
+      height?: number;
+    }[];
+    enableNavigation: boolean;
+    enableUrlParams: boolean;
+    triggerSelector: string;
   }
-  
-  // Wait for DOM to be ready
-  document.addEventListener('DOMContentLoaded', () => {
-    // Get the container and its configuration
-    const containers = document.querySelectorAll('[data-lightbox-container]');
-    
-    containers.forEach(container => {
-      const dataEl = container.querySelector('[data-lightbox-data]');
-      if (!dataEl) return;
-      
-      const config = JSON.parse(dataEl.textContent);
-      const { images, enableNavigation, enableUrlParams, triggerSelector } = config;
 
-  class BaseLightbox {
-    constructor(container) {
-      this.currentIndex = 0;
-      this.container = container;
-      this.images = images;
-      this.overlay = container.querySelector('[data-lightbox-overlay]');
-      this.img = container.querySelector('[data-lightbox-image]');
-      this.spinner = container.querySelector('[data-lightbox-spinner]');
-      this.blurhashEl = container.querySelector('[data-lightbox-blurhash]');
-      this.triggerElements = document.querySelectorAll(triggerSelector);
+  type LightboxImage = LightboxConfig['images'][number];
 
-      this.initializeEventListeners();
-      this.checkUrlParams();
-    }
+  const BLURHASH_SIZE = 32;
 
-    initializeEventListeners() {
-      const closeButton = this.container.querySelector('[data-lightbox-close]');
-      const prevButton = this.container.querySelector('[data-lightbox-prev]');
-      const nextButton = this.container.querySelector('[data-lightbox-next]');
+  function fitToViewport(width: number, height: number) {
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.9;
+    const scale = Math.min(maxWidth / width, maxHeight / height);
+    return { width: width * scale, height: height * scale };
+  }
 
-      this.img.addEventListener('load', () => this.handleImageLoad());
+  function initLightbox(container: Element) {
+    const dataEl = container.querySelector('[data-lightbox-data]');
+    const overlay = container.querySelector<HTMLElement>('[data-lightbox-overlay]');
+    const img = container.querySelector<HTMLImageElement>('[data-lightbox-image]');
+    if (!dataEl?.textContent || !overlay || !img) return;
 
-      this.triggerElements.forEach((trigger, index) => {
-        trigger.addEventListener('click', () => {
-          const imageId = trigger.getAttribute('data-image-id');
-          const triggerIndex = imageId ? this.getImageIndexById(imageId) : index;
-          if (triggerIndex !== -1) {
-            this.openLightbox(triggerIndex);
-          }
-        });
-      });
+    const { images, enableNavigation, enableUrlParams, triggerSelector } =
+      JSON.parse(dataEl.textContent) as LightboxConfig;
+    const spinner = container.querySelector<HTMLElement>('[data-lightbox-spinner]');
+    const blurhashDiv = container.querySelector<HTMLElement>('[data-lightbox-blurhash] div');
+    let currentIndex = 0;
 
-      closeButton?.addEventListener('click', () => this.closeLightbox());
-      prevButton?.addEventListener('click', () => this.showPrevImage());
-      nextButton?.addEventListener('click', () => this.showNextImage());
+    const isOpen = () => !overlay.classList.contains('hidden');
+    const indexOfId = (id: string | null) => (id ? images.findIndex((image) => image.id === id) : -1);
 
-      this.overlay.addEventListener('click', (e) => {
-        if (e.target === this.overlay) {
-          this.closeLightbox();
-        }
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (!this.overlay.classList.contains('hidden')) {
-          switch (e.key) {
-            case 'Escape':
-              this.closeLightbox();
-              break;
-            case 'ArrowLeft':
-              if (enableNavigation) this.showPrevImage();
-              break;
-            case 'ArrowRight':
-              if (enableNavigation) this.showNextImage();
-              break;
-          }
-        }
-      });
-
-      // Handle browser back/forward navigation
-      window.addEventListener('popstate', () => {
-        this.handlePopState();
-      });
-    }
-
-    handlePopState() {
+    const setUrl = (imageId?: string) => {
       if (!enableUrlParams) return;
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const imageId = urlParams.get('image');
-
-      if (imageId) {
-        // User navigated to a URL with an image parameter
-        const index = this.getImageIndexById(imageId);
-        if (index !== -1) {
-          // Don't update URL again since we're responding to a popstate
-          this.currentIndex = index;
-          const image = this.images[index];
-
-          this.overlay.classList.remove('hidden');
-          if (this.spinner) {
-            this.spinner.style.display = 'flex';
-          }
-          this.img.classList.add('opacity-0');
-          document.body.style.overflow = 'hidden';
-
-          this.img.src = image.url;
-          this.img.alt = image.alt;
-          this.setBlurhashBackground(image);
-          // Don't call updateUrl() here to avoid pushing to history again
-        }
-      } else {
-        // User navigated back to base URL without image parameter
-        if (!this.overlay.classList.contains('hidden')) {
-          this.overlay.classList.add('hidden');
-          document.body.style.overflow = '';
-          this.img.src = '';
-          // Don't call clearUrl() here to avoid pushing to history again
-        }
-      }
-    }
-
-    handleImageLoad() {
-      if (this.spinner) {
-        this.spinner.style.display = 'none';
-      }
-      this.img.classList.remove('opacity-0');
-      const blurhashDiv = this.blurhashEl?.querySelector('div');
-      if (blurhashDiv) {
-        blurhashDiv.classList.add('opacity-0');
-      }
-    }
-
-    getImageIndexById(id) {
-      return this.images.findIndex(img => img.id === id);
-    }
-
-    checkUrlParams() {
-      if (!enableUrlParams) return;
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const imageId = urlParams.get('image');
-      if (imageId) {
-        const index = this.getImageIndexById(imageId);
-        if (index !== -1) {
-          this.openLightbox(index);
-        }
-      }
-    }
-
-    updateUrl() {
-      if (!enableUrlParams) return;
-      
-      const currentImage = this.images[this.currentIndex];
-      if (currentImage.id) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('image', currentImage.id);
-        window.history.pushState({}, '', url);
-      }
-    }
-
-    clearUrl() {
-      if (!enableUrlParams) return;
-      
       const url = new URL(window.location.href);
-      url.searchParams.delete('image');
+      if (imageId) url.searchParams.set('image', imageId);
+      else url.searchParams.delete('image');
       window.history.pushState({}, '', url);
-    }
+    };
 
-    async setBlurhashBackground(image) {
-      if (!image.blurhash || !this.blurhashEl || !decode) return;
-
+    const showBlurhash = (image: LightboxImage) => {
+      if (!blurhashDiv || !image.blurhash || !image.width || !image.height) return;
       try {
-        const pixels = decode(image.blurhash, 32, 32);
+        const pixels = decode(image.blurhash, BLURHASH_SIZE, BLURHASH_SIZE);
         const canvas = document.createElement('canvas');
-        canvas.width = 32;
-        canvas.height = 32;
+        canvas.width = BLURHASH_SIZE;
+        canvas.height = BLURHASH_SIZE;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-
-        const imageData = ctx.createImageData(32, 32);
+        const imageData = ctx.createImageData(BLURHASH_SIZE, BLURHASH_SIZE);
         imageData.data.set(pixels);
         ctx.putImageData(imageData, 0, 0);
-        
-        const blurhashDiv = this.blurhashEl.querySelector('div');
-        if (blurhashDiv && image.width && image.height) {
-          const size = this.calculateBlurhashSize(image.width, image.height);
-          blurhashDiv.style.width = `${size.width}px`;
-          blurhashDiv.style.height = `${size.height}px`;
-          blurhashDiv.style.backgroundImage = `url(${canvas.toDataURL()})`;
-          blurhashDiv.classList.remove('opacity-0');
-        }
-      } catch (error) {
-        console.error('Error decoding blurhash:', error);
+
+        const size = fitToViewport(image.width, image.height);
+        blurhashDiv.style.width = `${size.width}px`;
+        blurhashDiv.style.height = `${size.height}px`;
+        blurhashDiv.style.backgroundImage = `url(${canvas.toDataURL()})`;
+        blurhashDiv.classList.remove('opacity-0');
+      } catch {
+        // An invalid blurhash only costs the placeholder.
       }
-    }
+    };
 
-    calculateBlurhashSize(width, height) {
-      const viewportWidth = window.innerWidth * 0.9;
-      const viewportHeight = window.innerHeight * 0.9;
-      const aspectRatio = width / height;
-
-      let finalWidth, finalHeight;
-      
-      if (width > height) {
-        finalHeight = viewportWidth / aspectRatio;
-        if (finalHeight <= viewportHeight) {
-          finalWidth = viewportWidth;
-        } else {
-          finalWidth = viewportHeight * aspectRatio;
-          finalHeight = viewportHeight;
-        }
-      } else {
-        finalWidth = viewportHeight * aspectRatio;
-        if (finalWidth <= viewportWidth) {
-          finalHeight = viewportHeight;
-        } else {
-          finalWidth = viewportWidth;
-          finalHeight = viewportWidth / aspectRatio;
-        }
-      }
-
-      return { width: finalWidth, height: finalHeight };
-    }
-
-    openLightbox(index) {
-      this.currentIndex = index;
-      const image = this.images[index];
-
-      this.overlay.classList.remove('hidden');
-      if (this.spinner) {
-        this.spinner.style.display = 'flex';
-      }
-      this.img.classList.add('opacity-0');
+    // Shows an image without touching history, so popstate can reuse it.
+    const show = (index: number) => {
+      currentIndex = index;
+      const image = images[index];
+      overlay.classList.remove('hidden');
+      if (spinner) spinner.style.display = 'flex';
+      img.classList.add('opacity-0');
       document.body.style.overflow = 'hidden';
+      img.src = image.url;
+      img.alt = image.alt;
+      showBlurhash(image);
+    };
 
-      this.img.src = image.url;
-      this.img.alt = image.alt;
-      this.setBlurhashBackground(image);
-      this.updateUrl();
-
-      // Track lightbox opened event
-      window.posthog?.capture('lightbox_opened', {
-        image_id: image.id,
-        image_index: index,
-        total_images: this.images.length
-      });
-    }
-
-    closeLightbox() {
-      this.overlay.classList.add('hidden');
+    const hide = () => {
+      overlay.classList.add('hidden');
       document.body.style.overflow = '';
-      this.img.src = '';
-      this.clearUrl();
-    }
+      img.removeAttribute('src');
+    };
 
-    showPrevImage() {
-      const newIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
-
-      // Track navigation event
-      window.posthog?.capture('lightbox_navigated', {
-        direction: 'previous',
-        from_index: this.currentIndex,
-        to_index: newIndex,
-        total_images: this.images.length
+    const open = (index: number) => {
+      show(index);
+      setUrl(images[index].id);
+      window.posthog?.capture('lightbox_opened', {
+        image_id: images[index].id,
+        image_index: index,
+        total_images: images.length,
       });
+    };
 
-      this.openLightbox(newIndex);
-    }
+    const close = () => {
+      hide();
+      setUrl();
+    };
 
-    showNextImage() {
-      const newIndex = (this.currentIndex + 1) % this.images.length;
-
-      // Track navigation event
+    const step = (direction: 1 | -1) => {
+      const newIndex = (currentIndex + direction + images.length) % images.length;
       window.posthog?.capture('lightbox_navigated', {
-        direction: 'next',
-        from_index: this.currentIndex,
+        direction: direction === 1 ? 'next' : 'previous',
+        from_index: currentIndex,
         to_index: newIndex,
-        total_images: this.images.length
+        total_images: images.length,
       });
+      open(newIndex);
+    };
 
-      this.openLightbox(newIndex);
-    }
+    img.addEventListener('load', () => {
+      if (spinner) spinner.style.display = 'none';
+      img.classList.remove('opacity-0');
+      blurhashDiv?.classList.add('opacity-0');
+    });
+
+    document.querySelectorAll(triggerSelector).forEach((trigger, index) => {
+      trigger.addEventListener('click', () => {
+        const imageId = trigger.getAttribute('data-image-id');
+        const triggerIndex = imageId ? indexOfId(imageId) : index;
+        if (triggerIndex !== -1) open(triggerIndex);
+      });
+    });
+
+    container.querySelector('[data-lightbox-close]')?.addEventListener('click', close);
+    container.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => step(-1));
+    container.querySelector('[data-lightbox-next]')?.addEventListener('click', () => step(1));
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!isOpen()) return;
+      if (event.key === 'Escape') close();
+      else if (enableNavigation && event.key === 'ArrowLeft') step(-1);
+      else if (enableNavigation && event.key === 'ArrowRight') step(1);
+    });
+
+    if (!enableUrlParams) return;
+
+    window.addEventListener('popstate', () => {
+      const index = indexOfId(new URLSearchParams(window.location.search).get('image'));
+      if (index !== -1) show(index);
+      else if (isOpen()) hide();
+    });
+
+    const initialIndex = indexOfId(new URLSearchParams(window.location.search).get('image'));
+    // Shared link to an image: open it without pushing a duplicate history entry.
+    if (initialIndex !== -1) show(initialIndex);
   }
 
-      // Instantiate the lightbox for this container
-      new BaseLightbox(container);
-    });
-  });
+  document.querySelectorAll('[data-lightbox-container]').forEach(initLightbox);
 </script>
