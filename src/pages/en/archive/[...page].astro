@@ -1,0 +1,11 @@
+---
+import ArchivePage from '@/components/ArchivePage.astro';
+import { loadArchive } from '@/lib/archive';
+
+export const prerender = false;
+
+const archive = await loadArchive(Astro, 'en');
+if (archive instanceof Response) return archive;
+---
+
+<ArchivePage locale="en" archive={archive} />

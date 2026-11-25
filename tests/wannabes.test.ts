@@ -33,7 +33,7 @@ function mockClient(handler: (url: URL, init?: RequestInit) => Response | Promis
   });
 }
 
-test('archive translates offsets/search into REST pagination with private bearer auth', async () => {
+test('archive passes page and search to REST pagination with private bearer auth', async () => {
   const service = new AlbumsService(mockClient((url, init) => {
     assert.equal(url.pathname, '/api/v1/posts');
     assert.equal(url.searchParams.get('page'), '2');
@@ -46,8 +46,8 @@ test('archive translates offsets/search into REST pagination with private bearer
     assert.ok(!url.toString().includes('test-secret'));
     return Response.json(page());
   }));
-  const result = await service.searchAlbums({ start: 15, limit: 15, searchTerm: 'Artist & Festival' });
-  assert.deepEqual(result.pagination, { start: 15, limit: 15, total: 52 });
+  const result = await service.searchAlbums({ page: 2, perPage: 15, searchTerm: 'Artist & Festival' });
+  assert.equal(result.total, 52);
   assert.equal(result.albums[0].venue.name, 'Festival');
   assert.equal(result.albums[0].thumbnail.url, photo.sizes.large.url);
 });

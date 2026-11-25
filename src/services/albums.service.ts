@@ -4,29 +4,25 @@ import { PHOTOGRAPHER_FILTER, WannabesHttpError, type WannabesClient } from '../
 import type { AlbumDetail, AlbumPost } from '../types/components';
 
 interface AlbumSearchParams {
-  start?: number;
-  limit?: number;
+  page?: number;
+  perPage?: number;
   searchTerm?: string;
 }
 
 export class AlbumsService {
   constructor(private api: WannabesClient = wannabesApi) {}
 
-  async searchAlbums({ start = 0, limit = 12, searchTerm }: AlbumSearchParams = {}) {
+  async searchAlbums({ page = 1, perPage = 12, searchTerm }: AlbumSearchParams = {}) {
     const data = await this.api.listPosts({
       ...PHOTOGRAPHER_FILTER,
-      page: Math.floor(start / limit) + 1,
-      per_page: limit,
+      page,
+      per_page: perPage,
       q: searchTerm,
       sort: '-date',
     });
     return {
       albums: data.data.map(mapPost).filter((post): post is AlbumPost => post !== null),
-      pagination: {
-        start: (data.meta.current_page - 1) * data.meta.per_page,
-        limit: data.meta.per_page,
-        total: data.meta.total,
-      },
+      total: data.meta.total,
     };
   }
 
@@ -58,7 +54,7 @@ export class AlbumsService {
   }
 
   async getRecentAlbums(limit = 6) {
-    const { albums } = await this.searchAlbums({ limit });
+    const { albums } = await this.searchAlbums({ perPage: limit });
     return albums;
   }
 }

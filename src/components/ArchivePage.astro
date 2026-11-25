@@ -29,10 +29,10 @@ const translatePath = useTranslatedPath(locale);
 const searchParam = archive?.searchTerm ?? '';
 const currentPage = archive?.currentPage ?? 1;
 const albums = archive?.albums ?? [];
-const pagination = archive?.pagination ?? { start: 0, limit: POSTS_PER_PAGE, total: 0 };
+const total = archive?.total ?? 0;
 const upstreamDown = archive === null;
 
-const totalPages = Math.ceil(pagination.total / POSTS_PER_PAGE);
+const totalPages = Math.ceil(total / POSTS_PER_PAGE);
 const archiveRoute = translatePath('/archive');
 const collectionPageSchema = getCollectionPageSchema(locale);
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.behangmotief.be';
@@ -90,7 +90,7 @@ const isPaginated = currentPage > 1;
     totalPages,
     searchTerm: searchParam,
     albumCount: albums.length,
-    totalAlbums: pagination.total
+    totalAlbums: total
   })}
 />
 <script is:inline>
