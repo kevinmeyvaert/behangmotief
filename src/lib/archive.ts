@@ -10,7 +10,7 @@ export interface ArchiveData {
   searchTerm: string;
 }
 
-export function readCurrentPage(url: URL, pageParam?: string): number {
+function readCurrentPage(url: URL, pageParam?: string): number {
   const fromPath = pageParam ? Number.parseInt(pageParam, 10) : Number.NaN;
   const fromQuery = Number.parseInt(url.searchParams.get('page') || '1', 10);
   const raw = Number.isFinite(fromPath) ? fromPath : fromQuery;

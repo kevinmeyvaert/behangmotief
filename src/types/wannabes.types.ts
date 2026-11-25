@@ -1,16 +1,16 @@
 /** REST v1 resources used by this portfolio. IDs are numeric on the wire. */
-export interface NamedResource {
+interface NamedResource {
   id: number;
   name: string;
   slug: string;
 }
 
-export interface PhotographerResource extends Omit<NamedResource, 'slug'> {
+interface PhotographerResource extends Omit<NamedResource, 'slug'> {
   slug: string | null;
   first_name: string;
 }
 
-export interface ImageSize {
+interface ImageSize {
   url: string;
   avif_url: string | null;
   width: number | null;
