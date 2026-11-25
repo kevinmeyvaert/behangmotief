@@ -55,11 +55,7 @@ const descriptionTemplate = descriptionTemplates[deterministicIndex] || '';
 const description = descriptionTemplate
   .replace('{venue}', post.venue.name)
   .replace('{artist}', post.artist.name);
-const publishedDate = new Date(post.date);
-const publishedTime = Number.isNaN(publishedDate.getTime())
-  ? undefined
-  : publishedDate.toISOString();
-const publishedDateOnly = publishedTime?.split('T')[0];
+const publishedTime = `${post.date}T00:00:00Z`;
 // Share on the album cover, the same photo the archive grid shows.
 const albumOgImageSrc = post.coverImage;
 const albumOgImageAlt = `${post.artist.name} at ${post.venue.name}`;
@@ -73,7 +69,7 @@ const imageGallerySchema = getImageGallerySchema(
   {
     title: `${post.artist.name} at ${post.venue.name}`,
     description,
-    date: publishedDateOnly,
+    date: post.date,
     artist: post.artist.name,
     venue: post.venue.name,
     images: post.images.slice(0, 10).map((img) => ({
@@ -114,7 +110,7 @@ const imageGallerySchema = getImageGallerySchema(
         <header class="text-center mb-12">
           <h1 class="text-4xl font-bold">{post.artist.name}</h1>
           <p class="text-gray-500">
-            <time>{formatPostDate(post.date)}</time> – {post.venue.name}
+            <time datetime={post.date}>{formatPostDate(post.date)}</time> – {post.venue.name}
           </p>
         </header>
 

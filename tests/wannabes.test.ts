@@ -4,6 +4,7 @@ import { createWannabesClient, UpstreamUnavailableError, WannabesHttpError } fro
 import { mapImage, mapPost } from '../src/lib/album-mapper';
 import { AlbumsService } from '../src/services/albums.service';
 import { mediaSize } from '../src/lib/image-url-builder';
+import { formatPostDate } from '../src/lib/date';
 import type { ImageResource, PostDetailResource, PostResource } from '../src/types/wannabes.types';
 
 const photo: ImageResource = {
@@ -154,4 +155,9 @@ test('cached clients share one upstream call per request and never cache failure
   assert.equal(calls, 2);
   await client.listPosts({ page: 3 });
   assert.equal(calls, 3);
+});
+
+test('post dates format as dd/mm/yyyy in any timezone', () => {
+  assert.equal(formatPostDate('2026-11-19'), '19/11/2026');
+  assert.equal(formatPostDate('2019-04-01'), '01/04/2019');
 });
