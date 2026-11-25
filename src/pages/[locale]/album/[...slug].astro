@@ -217,21 +217,18 @@ const imageGallerySchema = getImageGallerySchema(
         }
       };
 
-      backLink.addEventListener('click', (event) => {
-        if (window.history.length > 1) {
+      // Back to the archive page (with its search and page) or other page on this
+      // site the visitor came from. Visitors from elsewhere, e.g. Google, follow
+      // the link to the archive instead of leaving the site.
+      const archiveReferrerPath = toArchivePath(document.referrer);
+      if (archiveReferrerPath) {
+        backLink.href = archiveReferrerPath;
+      } else if (document.referrer.startsWith(`${window.location.origin}/`)) {
+        backLink.addEventListener('click', (event) => {
           event.preventDefault();
-          const archiveReferrerPath = toArchivePath(document.referrer);
-          if (archiveReferrerPath) {
-            window.location.assign(archiveReferrerPath);
-          } else {
-            window.history.back();
-          }
-          return;
-        }
-
-        event.preventDefault();
-        window.location.assign(archiveRoot);
-      });
+          window.history.back();
+        });
+      }
     }
   </script>
 </Layout>
