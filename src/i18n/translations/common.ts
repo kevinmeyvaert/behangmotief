@@ -22,6 +22,9 @@ export const common = {
     "notfound.title": "Page not found",
     "notfound.message": "This page doesn't exist (anymore). Browse the archive to find the photos you're looking for.",
     "notfound.cta": "Go to the archive",
+    "lightbox.close": "Close photo",
+    "lightbox.previous": "Previous photo",
+    "lightbox.next": "Next photo",
   },
   nl: {
     "portfolio.title": "Uitgelicht werk",
@@ -46,5 +49,8 @@ export const common = {
     "notfound.title": "Pagina niet gevonden",
     "notfound.message": "Deze pagina bestaat niet (meer). Blader door het archief om de foto's te vinden die je zoekt.",
     "notfound.cta": "Naar het archief",
+    "lightbox.close": "Foto sluiten",
+    "lightbox.previous": "Vorige foto",
+    "lightbox.next": "Volgende foto",
   },
 };

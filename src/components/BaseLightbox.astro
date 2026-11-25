@@ -1,4 +1,6 @@
 ---
+import { getLangFromUrl, useTranslations } from '@/i18n/utils';
+
 export interface LightboxImage {
   id?: string;
   url: string;
@@ -13,125 +15,76 @@ interface Props {
   enableNavigation?: boolean;
   enableUrlParams?: boolean;
   triggerSelector?: string;
-  className?: string;
 }
 
-const { 
-  images, 
+const {
+  images,
   enableNavigation = false,
   enableUrlParams = false,
   triggerSelector = '[data-lightbox-trigger]',
-  className = ''
 } = Astro.props;
 
-const isGallery = images.length > 1;
+const t = useTranslations(getLangFromUrl(Astro.url));
+const showNavigation = enableNavigation && images.length > 1;
+const buttonClass = 'absolute text-white hover:text-gray-300 p-2 cursor-pointer z-10';
+const iconPaths = {
+  close: 'M6 18L18 6M6 6l12 12',
+  previous: 'M15.75 19.5L8.25 12l7.5-7.5',
+  next: 'M8.25 4.5l7.5 7.5-7.5 7.5',
+};
 ---
 
-<div class={`base-lightbox ${className}`} data-lightbox-container>
+<div data-lightbox-container>
   <script
     is:inline
     type="application/json"
     data-lightbox-data
     set:html={JSON.stringify({ images, enableNavigation, enableUrlParams, triggerSelector })}
   />
-  <div
-    class="lightbox-overlay hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+  <dialog
+    class="m-0 p-0 w-full h-full max-w-none max-h-none bg-black/90 backdrop:bg-transparent outline-none"
+    tabindex="-1"
     data-lightbox-overlay
   >
-    <button
-      class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
-      data-lightbox-close
-      aria-label="Close lightbox"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-8 h-8"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M6 18L18 6M6 6l12 12"></path>
+    <button class={`${buttonClass} top-4 right-4`} data-lightbox-close aria-label={t('lightbox.close')}>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d={iconPaths.close}></path>
       </svg>
     </button>
-    
-    {enableNavigation && isGallery && (
+
+    {showNavigation && (
       <>
-        <button
-          class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
-          data-lightbox-prev
-          aria-label="Previous image"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-8 h-8"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"></path>
+        <button class={`${buttonClass} left-4 top-1/2 -translate-y-1/2`} data-lightbox-prev aria-label={t('lightbox.previous')}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d={iconPaths.previous}></path>
           </svg>
         </button>
-        <button
-          class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 cursor-pointer z-10"
-          data-lightbox-next
-          aria-label="Next image"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-8 h-8"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8.25 4.5l7.5 7.5-7.5 7.5"></path>
+        <button class={`${buttonClass} right-4 top-1/2 -translate-y-1/2`} data-lightbox-next aria-label={t('lightbox.next')}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d={iconPaths.next}></path>
           </svg>
         </button>
       </>
     )}
-    
-    <div class="relative flex items-center justify-center w-full h-full p-4">
+
+    <div class="relative flex items-center justify-center w-full h-full p-4" data-lightbox-stage>
       <div class="relative w-auto h-auto">
-        {images.length > 0 && images[0].blurhash && (
-          <div
-            class="absolute inset-0 flex items-center justify-center"
-            data-lightbox-blurhash
-          >
-            <div
-              class="bg-center bg-cover bg-no-repeat opacity-100 transition-opacity duration-300"
-            >
-            </div>
+        {images[0]?.blurhash && (
+          <div class="absolute inset-0 flex items-center justify-center" data-lightbox-blurhash>
+            <div class="bg-center bg-cover bg-no-repeat transition-opacity duration-300"></div>
           </div>
         )}
-        <div
-          class="absolute inset-0 flex items-center justify-center z-10"
-          data-lightbox-spinner
-        >
-          <div
-            class="animate-spin rounded-full h-10 w-10 border-2 border-white/20 border-t-white"
-          >
-          </div>
+        <div class="absolute inset-0 flex items-center justify-center z-10" data-lightbox-spinner>
+          <div class="animate-spin rounded-full h-10 w-10 border-2 border-white/20 border-t-white"></div>
         </div>
         <img
-          src=""
           alt=""
           class="relative max-h-[90vh] max-w-[90vw] w-auto h-auto object-contain opacity-0 transition-opacity duration-300"
           data-lightbox-image
         />
       </div>
     </div>
-  </div>
+  </dialog>
 </div>
 
 <script>
@@ -164,7 +117,8 @@ const isGallery = images.length > 1;
 
   function initLightbox(container: Element) {
     const dataEl = container.querySelector('[data-lightbox-data]');
-    const overlay = container.querySelector<HTMLElement>('[data-lightbox-overlay]');
+    const overlay = container.querySelector<HTMLDialogElement>('[data-lightbox-overlay]');
+    const stage = container.querySelector('[data-lightbox-stage]');
     const img = container.querySelector<HTMLImageElement>('[data-lightbox-image]');
     if (!dataEl?.textContent || !overlay || !img) return;
 
@@ -174,7 +128,7 @@ const isGallery = images.length > 1;
     const blurhashDiv = container.querySelector<HTMLElement>('[data-lightbox-blurhash] div');
     let currentIndex = 0;
 
-    const isOpen = () => !overlay.classList.contains('hidden');
+    const isOpen = () => overlay.open;
     const indexOfId = (id: string | null) => (id ? images.findIndex((image) => image.id === id) : -1);
 
     const setUrl = (imageId?: string) => {
@@ -212,7 +166,11 @@ const isGallery = images.length > 1;
     const show = (index: number) => {
       currentIndex = index;
       const image = images[index];
-      overlay.classList.remove('hidden');
+      if (!overlay.open) {
+        overlay.showModal();
+        // Focus the dialog itself so opening it doesn't put a focus ring on the close button.
+        overlay.focus();
+      }
       if (spinner) spinner.style.display = 'flex';
       img.classList.add('opacity-0');
       document.body.style.overflow = 'hidden';
@@ -222,7 +180,7 @@ const isGallery = images.length > 1;
     };
 
     const hide = () => {
-      overlay.classList.add('hidden');
+      overlay.close();
       document.body.style.overflow = '';
       img.removeAttribute('src');
     };
@@ -270,14 +228,17 @@ const isGallery = images.length > 1;
     container.querySelector('[data-lightbox-close]')?.addEventListener('click', close);
     container.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => step(-1));
     container.querySelector('[data-lightbox-next]')?.addEventListener('click', () => step(1));
+    // Clicking anywhere beside the photo closes, like the Escape key.
     overlay.addEventListener('click', (event) => {
-      if (event.target === overlay) close();
+      if (event.target === overlay || event.target === stage) close();
+    });
+    overlay.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      close();
     });
 
-    document.addEventListener('keydown', (event) => {
-      if (!isOpen()) return;
-      if (event.key === 'Escape') close();
-      else if (enableNavigation && event.key === 'ArrowLeft') step(-1);
+    overlay.addEventListener('keydown', (event) => {
+      if (enableNavigation && event.key === 'ArrowLeft') step(-1);
       else if (enableNavigation && event.key === 'ArrowRight') step(1);
     });
 
