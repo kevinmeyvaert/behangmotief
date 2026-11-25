@@ -59,5 +59,5 @@ npm run check        # Astro diagnostics
 ## Development Notes
 
 - The site uses server-side rendering with selective ISR exclusions for archive pages
-- REST photos are served from media.wannabes.be; curated homepage photos still use the legacy image CDN
+- All photos, including the curated homepage ones, are served from media.wannabes.be
 - Vercel Analytics is enabled for production monitoring

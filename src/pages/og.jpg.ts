@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_TYPE, OG_IMAGE_WIDTH } from '@/lib/og';
-import { ImageUrlBuilder, WANNABES_IMAGE_HOSTS } from '@/lib/image-url-builder';
+import { WANNABES_IMAGE_HOSTS, mediaSize } from '@/lib/image-url-builder';
 
 export const prerender = false;
 
@@ -54,11 +54,7 @@ async function resolveBackground(src: string | null): Promise<Buffer> {
     }
 
     // Request a card-sized variant rather than the full-resolution original.
-    const parsed = ImageUrlBuilder.parse(src);
-    const response = await fetch(
-      ImageUrlBuilder.mediaSize(src, 'large') ??
-        (parsed ? ImageUrlBuilder.build(parsed.path, { width: OG_IMAGE_WIDTH }) : src)
-    );
+    const response = await fetch(mediaSize(src, 'large') ?? src);
 
     // A missing image redirects to an HTML error page, which still reports ok,
     // so check the type rather than trusting the status.

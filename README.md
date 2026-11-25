@@ -191,7 +191,7 @@ Multi-layered approach for optimal performance:
 
 1. **BlurHash Placeholders**: Instant low-resolution previews while images load
 2. **Sharp Processing**: Server-side image optimization during build
-3. **REST Image Sizes**: API-provided thumbnail and large images on `media.wannabes.be`; curated homepage images retain the legacy CDN
+3. **REST Image Sizes**: all photos, including curated homepage images, use the stored sizes on `media.wannabes.be`
 4. **Lazy Loading**: Native browser lazy loading for off-screen images
 5. **Responsive Images**: Multiple sizes served based on viewport
 

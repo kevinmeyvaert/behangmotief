@@ -1,5 +1,5 @@
 import type { ExternalImageService, ImageTransform } from 'astro';
-import { ImageUrlBuilder, MEDIA_SIZES } from './image-url-builder';
+import { MEDIA_SIZES, mediaSize } from './image-url-builder';
 
 /**
  * Points `<Image />` straight at the Wannabes image CDN.
@@ -10,38 +10,14 @@ import { ImageUrlBuilder, MEDIA_SIZES } from './image-url-builder';
  * server out of the image path entirely and lets Astro build a real `srcset`.
  */
 
-const SUPPORTED_FORMATS = new Set(['jpg', 'webp', 'png']);
-
 const resolveSrc = (src: ImageTransform['src']) =>
   typeof src === 'string' ? src : src.src;
 
+// Wannabes photos map to the nearest stored size; local files are used as-is.
 const buildUrl = (options: ImageTransform) => {
   const src = resolveSrc(options.src);
-  const media = ImageUrlBuilder.mediaSize(
-    src,
-    options.width && options.width <= MEDIA_SIZES.medium ? 'medium' : 'large'
-  );
-  if (media) {
-    return media;
-  }
-
-  const parsed = ImageUrlBuilder.parse(src);
-
-  // Local files and anything not served by Wannabes are used as-is.
-  if (!parsed) {
-    return src;
-  }
-
-  return ImageUrlBuilder.build(parsed.path, {
-    width: options.width,
-    height: options.height,
-    crop: parsed.crop,
-    format:
-      typeof options.format === 'string' && SUPPORTED_FORMATS.has(options.format)
-        ? (options.format as 'jpg' | 'webp' | 'png')
-        : undefined,
-    quality: typeof options.quality === 'number' ? options.quality : undefined,
-  });
+  const size = options.width && options.width <= MEDIA_SIZES.medium ? 'medium' : 'large';
+  return mediaSize(src, size) ?? src;
 };
 
 const service: ExternalImageService = {
@@ -50,18 +26,15 @@ const service: ExternalImageService = {
   },
 
   getSrcSet(options) {
-    const { widths, ...transform } = options;
-    const src = resolveSrc(options.src);
+    const { widths: _widths, ...transform } = options;
     const aspectRatio =
       options.width && options.height ? options.width / options.height : undefined;
 
-    // media.wannabes.be only stores fixed sizes, and only Wannabes URLs can be
+    // media.wannabes.be only stores fixed sizes, and nothing else can be
     // resized, so anything else would emit the same URL under every descriptor.
-    const srcsetWidths = ImageUrlBuilder.mediaSize(src, 'large')
+    const srcsetWidths = mediaSize(resolveSrc(options.src), 'large')
       ? Object.values(MEDIA_SIZES)
-      : widths?.length && ImageUrlBuilder.parse(src)
-        ? widths
-        : [];
+      : [];
 
     return srcsetWidths.map((width) => ({
       transform: {

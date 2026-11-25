@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { createWannabesClient, UpstreamUnavailableError, WannabesHttpError } from '../src/lib/rest-client';
 import { mapImage, mapPost } from '../src/lib/album-mapper';
 import { AlbumsService } from '../src/services/albums.service';
-import { ImageUrlBuilder } from '../src/lib/image-url-builder';
+import { mediaSize } from '../src/lib/image-url-builder';
 import type { ImageResource, PostDetailResource, PostResource } from '../src/types/wannabes.types';
 
 const photo: ImageResource = {
@@ -135,11 +135,11 @@ test('media URLs resolve to stored medium and large sizes, leaving square thumbs
   const original = 'https://media.wannabes.be/5080/2023-balthazar-qsbntqA3fg52bzigc.webp?v=1';
   const large = 'https://media.wannabes.be/5080/conversions/2023-balthazar-qsbntqA3fg52bzigc-large.jpg?v=1';
   const medium = 'https://media.wannabes.be/5080/conversions/2023-balthazar-qsbntqA3fg52bzigc-medium.jpg?v=1';
-  assert.equal(ImageUrlBuilder.mediaSize(original, 'large'), large);
-  assert.equal(ImageUrlBuilder.mediaSize(large, 'medium'), medium);
-  assert.equal(ImageUrlBuilder.mediaSize(medium, 'large'), large);
-  assert.equal(ImageUrlBuilder.mediaSize('https://media.wannabes.be/42/conversions/a-thumb.jpg?v=1', 'large'), null);
-  assert.equal(ImageUrlBuilder.mediaSize('https://images.wannabes.be/S=W750/a.jpg', 'large'), null);
+  assert.equal(mediaSize(original, 'large'), large);
+  assert.equal(mediaSize(large, 'medium'), medium);
+  assert.equal(mediaSize(medium, 'large'), large);
+  assert.equal(mediaSize('https://media.wannabes.be/42/conversions/a-thumb.jpg?v=1', 'large'), null);
+  assert.equal(mediaSize('https://example.com/a.jpg', 'large'), null);
 });
 
 test('cached clients share one upstream call per request and never cache failures', async () => {
