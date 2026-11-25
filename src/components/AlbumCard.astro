@@ -1,0 +1,44 @@
+---
+import BlurHashImage from './BlurHashImage.astro';
+import type { AlbumPost } from '@/types/components';
+
+interface Props {
+  post: AlbumPost;
+  href: string;
+  title: string;
+  subtitle: string;
+  /** Crop to 4:3 instead of keeping the photo's own shape. */
+  cropped?: boolean;
+  priority?: boolean;
+  class?: string;
+}
+
+const { post, href, title, subtitle, cropped = false, priority = false, class: className } = Astro.props;
+const { width, height } = post.thumbnail.dimensions;
+---
+
+<a href={href} class:list={['group', className]}>
+  <article
+    class="relative overflow-hidden"
+    style={{
+      boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.2)',
+      aspectRatio: cropped ? undefined : `${width} / ${height}`,
+    }}
+  >
+    <BlurHashImage
+      blurhash={post.thumbnail.blurhash}
+      src={post.thumbnail.url}
+      alt={`${post.artist.name} at ${post.venue.name}`}
+      width={width}
+      height={height}
+      priority={priority}
+      class={`object-cover w-full transition-transform duration-300 group-hover:scale-105 md:transform md:scale-100 ${cropped ? 'aspect-[4/3]' : 'h-full'}`}
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-100">
+      <div class="absolute bottom-0 left-0 right-0 p-4 text-white flex flex-row items-center justify-between">
+        <h2 class="font-bold text-lg uppercase">{title}</h2>
+        <p class="text-sm opacity-75">{subtitle}</p>
+      </div>
+    </div>
+  </article>
+</a>

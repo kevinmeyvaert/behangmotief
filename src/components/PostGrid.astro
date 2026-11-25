@@ -1,6 +1,6 @@
 ---
 import { getLangFromUrl, useTranslatedPath } from '@/i18n/utils';
-import BlurHashImage from './BlurHashImage.astro';
+import AlbumCard from './AlbumCard.astro';
 import { formatPostDate } from '@/lib/date';
 import type { AlbumPost } from '@/types/components';
 
@@ -18,39 +18,15 @@ const albumBasePath = translatePath('/album');
 
 <div class="columns-1 md:columns-2 lg:columns-3 gap-6">
   {
-    posts.map((post, index) => {
-      return (
-        <a
-          href={`${albumBasePath}${post.slug}/`}
-          class="group block break-inside-avoid mb-6"
-        >
-          <article
-            class="relative overflow-hidden"
-            style={{
-              boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.2)',
-              aspectRatio: `${post.thumbnail.dimensions.width} / ${post.thumbnail.dimensions.height}`,
-            }}
-          >
-            <BlurHashImage
-              blurhash={post.thumbnail.blurhash}
-              src={post.thumbnail.url}
-              alt={`${post.artist.name} at ${post.venue.name}`}
-              width={post.thumbnail.dimensions.width}
-              height={post.thumbnail.dimensions.height}
-              priority={index < priorityCount}
-              class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 md:transform md:scale-100"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-100">
-              <div class="absolute bottom-0 left-0 right-0 p-4 text-white flex flex-row items-center justify-between">
-                <h2 class="font-bold text-lg uppercase">{post.artist.name}</h2>
-                <p class="text-sm opacity-75">
-                  {post.venue.name} — {formatPostDate(post.date)}
-                </p>
-              </div>
-            </div>
-          </article>
-        </a>
-      );
-    })
+    posts.map((post, index) => (
+      <AlbumCard
+        post={post}
+        href={`${albumBasePath}${post.slug}/`}
+        title={post.artist.name}
+        subtitle={`${post.venue.name} — ${formatPostDate(post.date)}`}
+        priority={index < priorityCount}
+        class="block break-inside-avoid mb-6"
+      />
+    ))
   }
 </div>

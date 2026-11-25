@@ -1,7 +1,7 @@
 ---
 import { getLangFromUrl, useTranslatedPath } from '@/i18n/utils';
 import { formatPostDate } from '@/lib/date';
-import BlurHashImage from './BlurHashImage.astro';
+import AlbumCard from './AlbumCard.astro';
 import type { ui } from '@/i18n/ui';
 import type { AlbumPost } from '@/types/components';
 
@@ -27,31 +27,13 @@ const albumBasePath = translatePath('/album');
   >
     {
       relatedPosts.map((post) => (
-        <a href={`${albumBasePath}${post.slug}/`} class="group">
-          <article
-            class="relative overflow-hidden"
-            style={{
-              boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <BlurHashImage
-              blurhash={post.thumbnail.blurhash}
-              src={post.thumbnail.url}
-              alt={`${post.artist.name} at ${post.venue.name}`}
-              width={post.thumbnail.dimensions.width}
-              height={post.thumbnail.dimensions.height}
-              class="aspect-[4/3] object-cover w-full transition-transform duration-300 group-hover:scale-105 md:transform md:scale-100"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-100">
-              <div class="absolute bottom-0 left-0 right-0 p-4 text-white flex flex-row items-center justify-between">
-                <h2 class="font-bold text-lg uppercase">
-                  {type === 'artist' ? post.venue.name : post.artist.name}
-                </h2>
-                <p class="text-sm opacity-75">{formatPostDate(post.date)}</p>
-              </div>
-            </div>
-          </article>
-        </a>
+        <AlbumCard
+          post={post}
+          href={`${albumBasePath}${post.slug}/`}
+          title={type === 'artist' ? post.venue.name : post.artist.name}
+          subtitle={formatPostDate(post.date)}
+          cropped
+        />
       ))
     }
   </div>
