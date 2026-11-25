@@ -22,9 +22,3 @@ export interface AlbumDetail extends AlbumPost {
   images: AlbumImage[];
   coverImage?: string;
 }
-
-export interface GridLayoutProps {
-  columns?: { mobile?: number; tablet?: number; desktop?: number };
-  gap?: string;
-  loading?: 'lazy' | 'eager';
-}

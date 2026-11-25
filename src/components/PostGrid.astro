@@ -1,7 +1,6 @@
 ---
 import { getLangFromUrl, useTranslatedPath } from '@/i18n/utils';
 import BlurHashImage from './BlurHashImage.astro';
-import MasonryGrid from './MasonryGrid.astro';
 import { formatPostDate } from '@/lib/date';
 import type { AlbumPost } from '@/types/components';
 
@@ -17,13 +16,13 @@ const translatePath = useTranslatedPath(lang);
 const albumBasePath = `${translatePath('/album')}/`;
 ---
 
-<MasonryGrid>
+<div class="columns-1 md:columns-2 lg:columns-3 gap-6">
   {
     posts.map((post, index) => {
       return (
         <a
           href={`${albumBasePath}${post.slug}/`}
-          class="group masonry-item"
+          class="group block break-inside-avoid mb-6"
         >
           <article
             class="relative overflow-hidden"
@@ -54,4 +53,4 @@ const albumBasePath = `${translatePath('/album')}/`;
       );
     })
   }
-</MasonryGrid>
+</div>
