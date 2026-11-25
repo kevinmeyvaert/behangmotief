@@ -13,7 +13,7 @@ const { images } = Astro.props;
 ---
 
 <div class="w-full h-full overflow-hidden relative" data-carousel>
-  <div class="h-full flex transition-transform duration-500 ease-out" data-carousel-track>
+  <div class="h-full flex transition-transform duration-500 ease-out motion-reduce:transition-none" data-carousel-track>
     {
       images.map((image, index) => (
         <div class="w-full h-full flex-none">
@@ -76,87 +76,57 @@ const { images } = Astro.props;
 </div>
 
 <script>
-  class Carousel {
-    constructor(element: HTMLElement) {
-      const container = element.querySelector(
-        '[data-carousel-track]'
-      ) as HTMLElement | null;
-      const prevButton = element.querySelector(
-        '[data-carousel-prev]'
-      ) as HTMLButtonElement | null;
-      const nextButton = element.querySelector(
-        '[data-carousel-next]'
-      ) as HTMLButtonElement | null;
+  const AUTOPLAY_MS = 4000;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-      if (!container || !prevButton || !nextButton) {
-        return;
-      }
+  function initCarousel(element: HTMLElement) {
+    const track = element.querySelector<HTMLElement>('[data-carousel-track]');
+    const prevButton = element.querySelector('[data-carousel-prev]');
+    const nextButton = element.querySelector('[data-carousel-next]');
+    if (!track || !prevButton || !nextButton) return;
 
-      const slides = container.children;
-      let currentIndex = 0;
-      let autoplayInterval: ReturnType<typeof setInterval> | undefined;
+    const slideCount = track.children.length;
+    let currentIndex = 0;
+    let autoplay: ReturnType<typeof setInterval> | undefined;
+    // Once a visitor picks a slide, the carousel stays where they put it.
+    let userNavigated = false;
 
-      const updateSlidePosition = () => {
-        const offset = -currentIndex * 100;
-        container.style.transform = `translateX(${offset}%)`;
-      };
+    const goToSlide = (index: number) => {
+      currentIndex = (index + slideCount) % slideCount;
+      track.style.transform = `translateX(${-currentIndex * 100}%)`;
+    };
 
-      const goToSlide = (index: number) => {
-        currentIndex = (index + slides.length) % slides.length;
-        updateSlidePosition();
-      };
+    const stopAutoplay = () => {
+      clearInterval(autoplay);
+      autoplay = undefined;
+    };
 
-      const nextSlide = () => goToSlide(currentIndex + 1);
-      const prevSlide = () => goToSlide(currentIndex - 1);
+    const startAutoplay = () => {
+      if (autoplay || userNavigated || reducedMotion.matches) return;
+      autoplay = setInterval(() => goToSlide(currentIndex + 1), AUTOPLAY_MS);
+    };
 
-      const startAutoplay = () => {
-        autoplayInterval = setInterval(nextSlide, 4000);
-      };
-
-      const stopAutoplay = () => {
-        if (autoplayInterval) {
-          clearInterval(autoplayInterval);
-        }
-      };
-
-      // Event listeners
-      prevButton.addEventListener('click', () => {
-        const fromIndex = currentIndex;
-        prevSlide();
-        stopAutoplay();
-        // Track carousel navigation
-        window.posthog?.capture('carousel_navigated', {
-          direction: 'previous',
-          from_index: fromIndex,
-          to_index: currentIndex,
-          total_slides: slides.length
-        });
+    const navigate = (direction: 1 | -1) => {
+      const fromIndex = currentIndex;
+      userNavigated = true;
+      stopAutoplay();
+      goToSlide(currentIndex + direction);
+      window.posthog?.capture('carousel_navigated', {
+        direction: direction === 1 ? 'next' : 'previous',
+        from_index: fromIndex,
+        to_index: currentIndex,
+        total_slides: slideCount,
       });
+    };
 
-      nextButton.addEventListener('click', () => {
-        const fromIndex = currentIndex;
-        nextSlide();
-        stopAutoplay();
-        // Track carousel navigation
-        window.posthog?.capture('carousel_navigated', {
-          direction: 'next',
-          from_index: fromIndex,
-          to_index: currentIndex,
-          total_slides: slides.length
-        });
-      });
+    prevButton.addEventListener('click', () => navigate(-1));
+    nextButton.addEventListener('click', () => navigate(1));
+    element.addEventListener('mouseenter', stopAutoplay);
+    element.addEventListener('mouseleave', startAutoplay);
+    reducedMotion.addEventListener('change', () => (reducedMotion.matches ? stopAutoplay() : startAutoplay()));
 
-      element.addEventListener('mouseenter', stopAutoplay);
-      element.addEventListener('mouseleave', startAutoplay);
-
-      // Initialize
-      updateSlidePosition();
-      startAutoplay();
-    }
+    startAutoplay();
   }
 
-  // Initialize all carousels on the page
-  document.querySelectorAll('[data-carousel]').forEach((element) => {
-    new Carousel(element as HTMLElement);
-  });
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(initCarousel);
 </script>
