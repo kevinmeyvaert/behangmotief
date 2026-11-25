@@ -35,48 +35,26 @@ export function useTranslatedPath(lang: Language) {
   };
 }
 
-export function getAlternateUrls(url: URL, siteUrl: string) {
+/** This page's path in another language, translating the route segment (archief ↔ archive). */
+export function getLocalizedPath(url: URL, targetLang: Language) {
   const currentLang = getLangFromUrl(url);
-  const pathname = url.pathname;
+  const [firstSegment, ...rest] = url.pathname
+    .replace(`/${currentLang}`, '')
+    .split('/')
+    .filter(Boolean);
+  if (!firstSegment) return `/${targetLang}/`;
 
-  // Remove the current locale from the pathname
-  const pathWithoutLocale = pathname.replace(`/${currentLang}`, '');
+  const routeKey = (Object.keys(routes[currentLang]) as (keyof (typeof routes)[Language])[])
+    .find((key) => routes[currentLang][key] === firstSegment);
+  const segment = routeKey ? routes[targetLang][routeKey] : firstSegment;
+  return withTrailingSlash(`/${[targetLang, segment, ...rest].join('/')}`);
+}
 
-  // Parse the path to identify route segments
-  const pathSegments = pathWithoutLocale.split('/').filter(Boolean);
-
-  // Generate URLs for all languages
-  const alternates: Record<string, string> = {};
-
-  Object.keys(ui).forEach((lang) => {
-    const typedLang = lang as keyof typeof ui;
-
-    if (pathSegments.length === 0) {
-      // Homepage
-      alternates[localeToHreflang[typedLang]] = `${siteUrl}/${lang}/`;
-    } else {
-      // Check if the first segment is a translatable route
-      const firstSegment = pathSegments[0];
-      const currentRoutes = routes[currentLang];
-      const targetRoutes = routes[typedLang];
-
-      let translatedPath = pathWithoutLocale;
-
-      // Find if the first segment matches a translated route
-      const routeKey = Object.keys(currentRoutes).find(
-        (key) => currentRoutes[key as keyof typeof currentRoutes] === firstSegment
-      );
-
-      if (routeKey) {
-        // Replace the first segment with its translation
-        const translatedSegment = targetRoutes[routeKey as keyof typeof targetRoutes];
-        const restOfPath = pathSegments.slice(1).join('/');
-        translatedPath = `/${translatedSegment}${restOfPath ? '/' + restOfPath : ''}`;
-      }
-
-      alternates[localeToHreflang[typedLang]] = `${siteUrl}${withTrailingSlash(`/${lang}${translatedPath}`)}`;
-    }
-  });
-
-  return alternates;
+export function getAlternateUrls(url: URL, siteUrl: string) {
+  return Object.fromEntries(
+    (Object.keys(ui) as Language[]).map((lang) => [
+      localeToHreflang[lang],
+      `${siteUrl}${getLocalizedPath(url, lang)}`,
+    ])
+  );
 }

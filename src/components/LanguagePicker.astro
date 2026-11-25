@@ -1,7 +1,6 @@
 ---
-import { getLangFromUrl } from '@/i18n/utils';
-import { languages, routes } from '../i18n/ui';
-import { withTrailingSlash } from '@/lib/url';
+import { getLangFromUrl, getLocalizedPath } from '@/i18n/utils';
+import { languages } from '../i18n/ui';
 
 interface Props {
   theme?: 'light' | 'dark';
@@ -9,30 +8,7 @@ interface Props {
 
 const { theme = 'light' } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
-
-// Get the current path segments
-const pathSegments = Astro.url.pathname.split('/').filter(Boolean);
-// Remove the language segment
-pathSegments.shift();
-// Get the first segment (potential route)
-const currentSegment = pathSegments[0];
-
-// Find if this is a translated route
-let baseRoute: keyof (typeof routes)[keyof typeof routes] | undefined;
-if (currentSegment) {
-  // Check if this is a translated route in current language
-  const currentRoutes = routes[lang as keyof typeof routes];
-  const matchingRoute = Object.entries(currentRoutes).find(
-    ([_, value]) => value === currentSegment
-  );
-  if (matchingRoute) {
-    baseRoute = matchingRoute[0] as keyof (typeof routes)[keyof typeof routes];
-  }
-}
-
-// Get language codes array for positioning
-const langCodes = Object.keys(languages);
-const activeIndex = langCodes.indexOf(lang);
+const activeIndex = Object.keys(languages).indexOf(lang);
 ---
 
 <style>
@@ -131,28 +107,11 @@ const activeIndex = langCodes.indexOf(lang);
   ></div>
   {
     Object.entries(languages).map(([code, label]) => {
-      let path = '';
-
-      if (baseRoute && code in routes) {
-        // Get the translated version of the route
-        path = `/${routes[code as keyof typeof routes][baseRoute]}`;
-
-        // If there are additional segments after the translatable part
-        // append them to the translated path
-        const additionalSegments = pathSegments.slice(1);
-        if (additionalSegments.length > 0) {
-          path += `/${additionalSegments.join('/')}`;
-        }
-      } else if (currentSegment) {
-        // If not a translated route, keep the original path
-        path = `/${pathSegments.join('/')}`;
-      }
-
       const isActive = code === lang;
       
       return (
         <a
-          href={withTrailingSlash(`/${code}${path}`)}
+          href={getLocalizedPath(Astro.url, code as keyof typeof languages)}
           class={`language-option ${theme} ${isActive ? 'active' : 'inactive'}`}
           aria-current={isActive ? 'page' : undefined}
           aria-label={`Switch to ${label}`}
